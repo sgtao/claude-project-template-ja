@@ -10,9 +10,16 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-REQUIRED = ["README.md", "CLAUDE.md", "HISTORY.md", "PROGRESS.md", "DECISIONS.md", "LEDGER.csv",
-            ".gitignore", ".claude/settings.json", "02_conversations/README.md",
-            "_examples/hearing/questions.json", "_tools/conv.py", "_tools/setup.py"]
+# テンプレートに最初から入っているファイル
+REQUIRED = ["README.md", "CLAUDE.md", "HISTORY.md", ".gitignore", ".claude/settings.json",
+            "02_conversations/README.md", "_examples/hearing/questions.json",
+            "_tools/conv.py", "_tools/setup.py", "_tools/check_spec.py",
+            "_templates/_SPEC.md", "_templates/_BRIEF.md", "_templates/_PROGRESS.md",
+            "_templates/_DECISIONS.md", "_templates/_LEDGER.csv",
+            "_templates/_KICKOFF.build.md", "_templates/_KICKOFF.knowledge.md"]
+# セットアップで作られるファイル（仕様のファイルごと）
+CREATED = {"SPEC.md": ["PROGRESS.md", "DECISIONS.md", "KICKOFF.md"],
+           "BRIEF.md": ["PROGRESS.md", "DECISIONS.md", "KICKOFF.md", "LEDGER.csv"]}
 
 
 def main():
@@ -38,10 +45,13 @@ def main():
                 report(False, f"{f} が JSON として読めない", str(e))
 
     print("セットアップ")
-    active = [n for n in ("SPEC.md", "BRIEF.md")
-              if (ROOT / n).exists() and "セットアップ前" not in (ROOT / n).read_text(encoding="utf-8")[:400]]
-    report(bool(active), f"仕様のファイル: {', '.join(active) or 'まだない'}",
+    active = [n for n in CREATED if (ROOT / n).exists()]
+    report(bool(active), f"仕様のファイル: {', '.join(active) or 'まだない（セットアップ前）'}",
            "python3 _tools/setup.py か /setup-project を実行する")
+    report(len(active) <= 1, "仕様のファイルは 1 つだけ", "使わないほうを消す")
+    for f in sorted({f for n in active for f in CREATED[n]}):
+        report((ROOT / f).exists(), f"{f}（セットアップで作られる）",
+               f"_templates/_{f} を写すか、python3 _tools/setup.py --force でやり直す")
     if active:
         r = subprocess.run([sys.executable, str(ROOT / "_tools" / "check_spec.py"), *active],
                            capture_output=True, text=True)

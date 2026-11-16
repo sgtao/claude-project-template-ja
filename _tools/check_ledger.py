@@ -53,6 +53,9 @@ def main():
     fails, warns = [], []
     ledger_path = ROOT / a.ledger if not Path(a.ledger).is_absolute() else Path(a.ledger)
     src_dir = ROOT / a.sources if not Path(a.sources).is_absolute() else Path(a.sources)
+    if not ledger_path.is_file():
+        sys.exit(f"台帳がありません: {a.ledger}（知的作業のセットアップで作られます。"
+                 "ひな形は _templates/_LEDGER.csv）")
     with open(ledger_path, encoding="utf-8-sig", newline="") as f:
         rows = list(csv.DictReader(f))
     need = {"id", "claim", "source", "locator", "quote", "kind", "unit"}

@@ -1,16 +1,18 @@
 ---
 name: setup-project
-description: テンプレートから始めたリポジトリの初期セットアップを、ヒアリング形式で行う。「セットアップして」「プロジェクトを始めたい」「初期設定」と言われたとき、または SPEC.md と BRIEF.md がどちらも「セットアップ前」のときに使う。
+description: テンプレートから始めたリポジトリの初期セットアップを、ヒアリング形式で行う。「セットアップして」「プロジェクトを始めたい」「初期設定」と言われたとき、または SPEC.md と BRIEF.md がどちらもない（セットアップ前）ときに使う。
 ---
 
 # setup-project：ヒアリング形式の初期セットアップ
 
-答えを集めて `_tools/setup.py` に渡し、`SPEC.md`（制作）か `BRIEF.md`（知的作業）と、
-最初のプロンプト `KICKOFF.md` を作る。質問・選択肢はすべて日本語で書く。
+答えを集めて `_tools/setup.py` に渡し、`_templates/` のひな形から、リポジトリの直下に
+`SPEC.md`（制作）か `BRIEF.md`（知的作業）、最初のプロンプト `KICKOFF.md`、`PROGRESS.md`、`DECISIONS.md`
+（知的作業は `LEDGER.csv` も）を作る。質問・選択肢はすべて日本語で書く。
 
 ## 手順
 
-1. `_examples/hearing/questions.json` を読む。質問の正本はこのファイルで、ここに質問を書き足さない。
+1. 直下に `SPEC.md` か `BRIEF.md` がすでにあれば、セットアップ済みとして止まり、やり直すかを聞く。
+   `_examples/hearing/questions.json` を読む。質問の正本はこのファイルで、ここに質問を書き足さない。
 2. ユーザーの最初の依頼文から答えが分かる項目は、聞かずに埋める。
 3. 残りを聞く。
    - `choices` のある質問は AskUserQuestion で聞く（1 回に 4 問まで。`when` の条件に合うものだけ）
@@ -31,4 +33,5 @@ description: テンプレートから始めたリポジトリの初期セット�
 
 ## やらないこと
 - セットアップの途中で、SPEC.md や BRIEF.md の中身を作り込まない（それは KICKOFF の仕事）
-- 記入済みの SPEC.md／BRIEF.md を、確認なしで上書きしない（`--force` は承認の後）
+- 作成済みの SPEC.md／BRIEF.md を、確認なしで上書きしない（`--force` は承認の後）
+- `_templates/` のひな形を直接書き換えない（直下に作られたファイルを編集する）

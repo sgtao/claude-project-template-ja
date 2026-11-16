@@ -1,4 +1,4 @@
-# claude-project-template
+# claude-project-template-ja
 
 Claude Code で、長い制作や知的作業を最後までやり切るためのテンプレートリポジトリ。
 Opus や Sonnet でも結果が安定するように、計画・記憶・検査をファイルとスクリプトに出してある。
@@ -11,7 +11,7 @@ Opus や Sonnet でも結果が安定するように、計画・記憶・検査�
 
 ```bash
 # 1. このテンプレートを新しいフォルダに写して、git を初期化する
-cp -r claude-project-template my-project && cd my-project
+cp -r claude-project-template-ja my-project && cd my-project
 git init && git add -A && git commit -m "init from template"
 
 # 2. ヒアリングに答える（どちらか）
@@ -23,6 +23,14 @@ python3 _tools/doctor.py
 
 # 4. Claude Code を開き、KICKOFF.md の枠の中を最初のメッセージとして渡す
 ```
+
+テンプレートの直下には、仕様や記憶のファイルはまだない。ひな形は `_templates/` にあり、
+ヒアリングの後で、選んだ型に必要なものだけが直下に作られる。
+
+| 型 | セットアップで直下に作られるファイル |
+|---|---|
+| 制作 | `SPEC.md`、`PROGRESS.md`、`DECISIONS.md`、`KICKOFF.md` |
+| 知的作業 | `BRIEF.md`、`LEDGER.csv`、`PROGRESS.md`、`DECISIONS.md`、`KICKOFF.md` |
 
 その後の流れは次のとおり。人が確かめるのは ★ の 3 点。
 
@@ -37,16 +45,13 @@ python3 _tools/doctor.py
 
 ## ファイルの地図
 
+最初から入っているもの：
+
 | ファイル | 役割 |
 |---|---|
 | `CLAUDE.md` | Claude の既定ルール（進め方、承認、検査、モデルの使い分け） |
 | `HISTORY.md` | 会話の記録・参照・改善のルール（CLAUDE.md から読み込まれる） |
-| `SPEC.md` | 制作の仕様と合格条件。セットアップで記入される |
-| `BRIEF.md` | 知的作業の依頼書と合格条件。セットアップで記入される |
-| `PROGRESS.md` | 現在地、チェックリスト、次の一手。セッションをまたぐ記憶 |
-| `DECISIONS.md` | 決めたことと、失敗から決めたルールの台帳 |
-| `LEDGER.csv` | 証拠台帳（知的作業で、資料から拾った事実と出所） |
-| `KICKOFF.md` | 最初のプロンプト。セットアップで作られる |
+| `_templates/` | 下の「セットアップで作られるもの」のひな形（`_SPEC.md` など。`{{KEY}}` に答えが入る）→ [説明](_templates/README.md) |
 | `01_sources/` | 資料や素材を置く |
 | `02_conversations/` | 会話の記録 |
 | `03_outputs/` | 成果物を置く |
@@ -57,7 +62,19 @@ python3 _tools/doctor.py
 | `.claude/settings.json` | 権限の初期設定 |
 | `.mcp.json.example` | MCP の設定例（有効化は手動）→ [手順](docs/setup-mcp-and-skills.md) |
 
-`SPEC.md` と `BRIEF.md` のうち、使わないほうは消してよい。
+セットアップで作られるもの（ひな形は `_templates/_<ファイル名>`）：
+
+| ファイル | 役割 | 作られる型 |
+|---|---|---|
+| `SPEC.md` | 制作の仕様と合格条件の正本 | 制作 |
+| `BRIEF.md` | 知的作業の依頼書と合格条件の正本 | 知的作業 |
+| `LEDGER.csv` | 証拠台帳（資料から拾った事実と出所） | 知的作業 |
+| `PROGRESS.md` | 現在地、チェックリスト、次の一手。セッションをまたぐ記憶 | 両方 |
+| `DECISIONS.md` | 決めたことと、失敗から決めたルールの台帳 | 両方 |
+| `KICKOFF.md` | 最初のプロンプト（型ごとに中身が違う） | 両方 |
+
+セットアップをやり直すときは `python3 _tools/setup.py --force`。`DECISIONS.md` と `LEDGER.csv` は
+書き足していく台帳なので、`--force` でも上書きしない。
 
 ## 考え方
 
@@ -87,4 +104,10 @@ effort は、Opus は medium、Sonnet は high から始め、検査で落ちる
 ## テンプレートを育てる
 プロジェクトで `/retro` から生まれたルールや検査のうち、ほかのプロジェクトでも使えるものは、
 このテンプレートに戻す。質問を足すときは `_examples/hearing/questions.json` と
-`_examples/templates/` のひな形に、同じ名前の `{{KEY}}` を置く。
+`_templates/` のひな形に、同じ名前の `{{KEY}}` を置く。ひな形を直したら、直下の `SPEC.md` などではなく
+`_templates/` のほうを直す（直下のファイルは、テンプレートには入れない）。
+
+
+---
+
+🤖 Built with [Claude.ai](https://claude.ai/)

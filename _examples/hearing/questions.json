@@ -1,5 +1,5 @@
 {
-  "_comment": "初期セットアップの質問。_tools/setup.py と /setup-project スキルの両方が、このファイルを使う。質問を足すときは、templates/ のひな形に同じ名前の {{KEY}} を置く。",
+  "_comment": "初期セットアップの質問。_tools/setup.py と /setup-project スキルの両方が、このファイルを使う。質問を足すときは、_templates/ のひな形に同じ名前の {{KEY}} を置く。",
   "questions": [
     {
       "key": "PROJECT_NAME",

@@ -1,11 +1,10 @@
 # _examples/
 
-セットアップの材料と見本。
+セットアップの材料と見本。ひな形（SPEC.md などの元）は [`_templates/`](../_templates/README.md) にある。
 
 | 場所 | 中身 |
 |---|---|
 | `hearing/questions.json` | ヒアリングの質問の正本。`_tools/setup.py` と `/setup-project` が使う |
-| `templates/` | SPEC.md、BRIEF.md、PROGRESS.md、KICKOFF.md のひな形（`{{KEY}}` に答えが入る） |
 | `answers/` | 答えの見本（JSON）。セットアップを実行すると、実際の答えが `current.json` に残る |
 | `prompts/` | 一文の依頼を、このテンプレートの形に直した例 |
 | `ledger-sample/` | 証拠台帳と検査の見本（架空の契約書） |
@@ -16,7 +15,9 @@
 一文の依頼
    │  /setup-project（Claude が選択式で聞く）または python3 _tools/setup.py（端末で答える）
    ▼
-answers/current.json ──▶ SPEC.md か BRIEF.md（下書き）＋ KICKOFF.md ＋ PROGRESS.md
+answers/current.json ＋ _templates/ のひな形
+   ▼
+SPEC.md か BRIEF.md（下書き）＋ KICKOFF.md ＋ PROGRESS.md ＋ DECISIONS.md（＋ 知的作業は LEDGER.csv）
    │  KICKOFF.md を Claude に渡す
    ▼
 [要記入] が埋まった SPEC.md／BRIEF.md ──▶ ユーザーが確認 ──▶ /milestone
@@ -34,7 +35,7 @@ python3 _tools/setup.py --answers _examples/answers/contract-review.json --out /
 
 ## 質問を変える
 1. `hearing/questions.json` に質問を足す（`key`、`ask`、必要なら `choices`、`when`、`default`）
-2. `templates/` のひな形の、答えを入れたい場所に `{{KEY}}` を書く
+2. `_templates/` のひな形の、答えを入れたい場所に `{{KEY}}` を書く
 3. 上の「試す」のコマンドで、出力を確かめる
 
 ## プロンプト例の読み方

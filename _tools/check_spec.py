@@ -8,7 +8,7 @@
   4. 数えられない形容詞（きれい、自然、適切 など）だけで書かれていないか（警告）
 
 使い方:
-  python3 _tools/check_spec.py            # SPEC.md と BRIEF.md のうち、記入済みのものを検査
+  python3 _tools/check_spec.py            # SPEC.md と BRIEF.md のうち、あるほうを検査
   python3 _tools/check_spec.py BRIEF.md
 """
 import re
@@ -30,9 +30,6 @@ def criteria(text):
 def check(path):
     text = path.read_text(encoding="utf-8")
     fails, warns = [], []
-    if "セットアップ前" in text[:400]:
-        print(f"{path.name}: セットアップ前のひな形です（検査しません）")
-        return 0
     todo = re.findall(r"\{\{[A-Z_]+\}\}|\[要記入[^\]]*\]", text)
     if todo:
         fails.append(f"未記入が {len(todo)} 箇所: {', '.join(sorted(set(todo))[:6])}")
@@ -61,13 +58,17 @@ def check(path):
 
 def main():
     names = sys.argv[1:] or ["SPEC.md", "BRIEF.md"]
-    total = 0
+    total, found = 0, 0
     for n in names:
         p = ROOT / n if not Path(n).is_absolute() else Path(n)
         if p.is_file():
+            found += 1
             total += check(p)
         elif sys.argv[1:]:
             sys.exit(f"ファイルがありません: {n}")
+    if not found:
+        sys.exit("SPEC.md も BRIEF.md もありません（セットアップ前）。"
+                 "python3 _tools/setup.py か /setup-project を実行してください。")
     sys.exit(1 if total else 0)
 
 
