@@ -1,0 +1,13 @@
+{
+  "PROJECT_NAME": "業務委託契約書のレビュー",
+  "KIND": "knowledge",
+  "GOAL": "取引先から届いた業務委託契約書について、締結の前に確認すべき論点を整理する",
+  "DELIVERABLE": "条項レビュー表、相手方への質問 10 問（優先度順）、弁護士に相談する事項の一覧",
+  "WORK_TYPE": "extract",
+  "READER": "自社の社長（法務の専門知識はない）",
+  "SOURCES": "01_sources/contract.md（契約書の本文をテキストにしたもの）",
+  "CONSTRAINTS": "法律の最終判断はしない。不確かな解釈は「確認が必要」と書く",
+  "DONE_HINT": "条項の見落としがない、指摘に条項番号と原文が付いている",
+  "APPROVALS": "CLAUDE.md の標準のとおり",
+  "MAIN_MODEL": "sonnet"
+}

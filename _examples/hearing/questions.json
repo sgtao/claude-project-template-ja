@@ -1,0 +1,92 @@
+{
+  "_comment": "初期セットアップの質問。_tools/setup.py と /setup-project スキルの両方が、このファイルを使う。質問を足すときは、templates/ のひな形に同じ名前の {{KEY}} を置く。",
+  "questions": [
+    {
+      "key": "PROJECT_NAME",
+      "ask": "プロジェクトの名前を教えてください。",
+      "example": "夜のマンハッタン 30秒映像",
+      "required": true
+    },
+    {
+      "key": "KIND",
+      "ask": "どちらの種類の仕事ですか？",
+      "required": true,
+      "choices": [
+        {"value": "build", "label": "制作（アプリ、ゲーム、映像、音楽、絵など、コードで作るもの）→ SPEC.md を使う"},
+        {"value": "knowledge", "label": "知的作業（調査、分析、レビュー、執筆、意思決定など）→ BRIEF.md を使う"}
+      ]
+    },
+    {
+      "key": "GOAL",
+      "ask": "最終的に達成したいことを、1〜2 文で教えてください。",
+      "example": "Three.js で、雲から地面へ雷に乗って落ちる 30 秒のシーンを作る",
+      "required": true
+    },
+    {
+      "key": "DELIVERABLE",
+      "ask": "完成物の形を教えてください（ファイル形式、長さ、構成など）。",
+      "example": "単一の HTML ファイル／1280x720 の MP4／条項レビュー表と質問 10 問",
+      "required": true
+    },
+    {
+      "key": "WORK_TYPE",
+      "ask": "仕事の型はどれに近いですか？",
+      "when": {"KIND": ["knowledge"]},
+      "required": true,
+      "choices": [
+        {"value": "extract", "label": "抽出型（資料から決まった項目を漏れなく拾う：契約レビュー、論文 1 本の整理など）"},
+        {"value": "generate", "label": "生成型（目標と素材から組み立てる：記事、授業設計、説明文など）"},
+        {"value": "synthesize", "label": "統合型（複数の資料を突き合わせる：調査、規制対応、データ分析など）"},
+        {"value": "judge", "label": "判断型（選択肢を比べて推奨を出す：戦略、投資判断など）"}
+      ]
+    },
+    {
+      "key": "READER",
+      "ask": "成果物の読み手は誰ですか？",
+      "when": {"KIND": ["knowledge"]},
+      "example": "自社の社長（法務の専門知識はない）",
+      "default": "ユーザー本人"
+    },
+    {
+      "key": "STACK",
+      "ask": "使いたい技術はありますか？（なければ空のまま。Claude が選びます）",
+      "when": {"KIND": ["build"]},
+      "example": "Three.js／Blender の Python／Web Audio",
+      "default": "指定なし（Claude が選び、理由を SPEC.md に書く）"
+    },
+    {
+      "key": "SOURCES",
+      "ask": "使う素材や資料はありますか？（ファイル名、URL、手元のデータなど）",
+      "example": "01_sources/contract.md、過去 3 年の売上 CSV",
+      "default": "なし"
+    },
+    {
+      "key": "CONSTRAINTS",
+      "ask": "制約や、やってほしくないことはありますか？",
+      "example": "外部ライブラリは CDN の 1 つまで／法律の最終判断はしない",
+      "default": "特になし"
+    },
+    {
+      "key": "DONE_HINT",
+      "ask": "「これができていれば合格」と言える点を、思いつくまま 1〜3 個教えてください。あとで Claude が数値の条件に直します。",
+      "example": "最後まで遊べる、30fps を保つ、スマホでも操作できる",
+      "default": "未指定（Claude が案を出す）"
+    },
+    {
+      "key": "APPROVALS",
+      "ask": "CLAUDE.md の標準（削除、push、有料の処理、対外送信、個人情報の持ち出し）のほかに、事前に承認を求めてほしい操作はありますか？",
+      "example": "パッケージの追加インストール",
+      "default": "CLAUDE.md の標準のとおり"
+    },
+    {
+      "key": "MAIN_MODEL",
+      "ask": "主に使うモデルはどれですか？",
+      "required": true,
+      "choices": [
+        {"value": "opus", "label": "Opus を主担当に、範囲の決まった作業は Sonnet に任せる"},
+        {"value": "sonnet", "label": "Sonnet を主担当に、仕様づくりと審査だけ Opus を使う"},
+        {"value": "fable", "label": "Fable を使う（このテンプレートの手順は、そのまま使える）"}
+      ]
+    }
+  ]
+}

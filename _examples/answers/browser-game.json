@@ -1,0 +1,12 @@
+{
+  "PROJECT_NAME": "ブラウザで遊ぶシューティングゲーム",
+  "KIND": "build",
+  "GOAL": "ブラウザで動く縦スクロールのシューティングゲームを 1 つ作る",
+  "DELIVERABLE": "単一の HTML ファイル。外部ライブラリなし",
+  "STACK": "Canvas 2D と Web Audio",
+  "SOURCES": "なし（画像と音はコードで生成する）",
+  "CONSTRAINTS": "外部の素材を使わない。キーボードとタッチの両方で操作できること",
+  "DONE_HINT": "最後まで遊べる、動きが止まらない、スコアが出る、やり直せる",
+  "APPROVALS": "CLAUDE.md の標準のとおり",
+  "MAIN_MODEL": "opus"
+}
