@@ -9,6 +9,8 @@
                   移す（直下から消える）: PLAN.md、HANDOFF.md、MANUAL-CHECK.md、02_conversations/ の記録、
                                           04_evals/ の実行記録（cases.csv と README.md を除く）
                   --keep <番号> で、続けて書き足す会話の記録を残す（例 --keep 1121-02）
+                  --merge で、すでにある 05_logs/<名前>/（版の途中で計画を置いていた場合など）に足す。
+                  同じ名前のファイルがあれば止める
   start <名前>  : _templates/_PLAN.md から、次のサイクルの PLAN.md を作る
   list          : 締めたサイクルの一覧
 
@@ -98,8 +100,11 @@ def cmd_close(a):
     if not NAME_RE.match(a.name):
         sys.exit("名前は英小文字・数字と . - で書いてください。例: v0-0-1、v1.2、2026q1")
     dest, acts = plan_close(a.name, set(a.keep or []))
-    if dest.exists():
-        sys.exit(f"05_logs/{a.name}/ はすでにあります。別の名前にしてください。")
+    if dest.exists() and not a.merge:
+        sys.exit(f"05_logs/{a.name}/ はすでにあります。別の名前にするか、そこに足すなら --merge を付けてください。")
+    clash = [d.relative_to(ROOT).as_posix() for _, _, d in acts if d.exists()]
+    if clash:
+        sys.exit("同じ名前のファイルが 05_logs にすでにあります: " + ", ".join(clash))
     if not acts:
         sys.exit("移すものも写すものもありません。")
     print(f"サイクル {a.name} を締めます（{'実行' if a.apply else '試し。何も変えていません'}）")
@@ -108,15 +113,16 @@ def cmd_close(a):
     if not a.apply:
         print("\n実行するには --apply を付けてください。移すファイルは直下から消えます（git には残ります）。")
         return
-    dest.mkdir(parents=True)
+    dest.mkdir(parents=True, exist_ok=True)
     for act, s, d in acts:
         d.parent.mkdir(parents=True, exist_ok=True)
         if act == "写す":
             shutil.copy2(s, d)
         else:
             shutil.move(str(s), str(d))
-    (dest / "README.md").write_text(readme(a.name, acts, a.keep or []), encoding="utf-8")
-    print(f"\n締めました: 05_logs/{a.name}/（README.md に一覧）")
+    rd = dest / ("README_cycle.md" if (dest / "README.md").exists() else "README.md")
+    rd.write_text(readme(a.name, acts, a.keep or []), encoding="utf-8")
+    print(f"\n締めました: 05_logs/{a.name}/（{rd.name} に一覧）")
     print(f"次の一手: python3 _tools/cycle.py start <次の名前> で PLAN.md を作る")
 
 
@@ -155,6 +161,7 @@ def main():
     s = sub.add_parser("close", help="今のサイクルの記録を 05_logs/ にまとめる")
     s.add_argument("name"); s.add_argument("--apply", action="store_true")
     s.add_argument("--keep", action="append", help="直下に残す会話の番号（例 1121-02）")
+    s.add_argument("--merge", action="store_true", help="すでにある 05_logs/<名前>/ に足す")
     s.set_defaults(f=cmd_close)
     s = sub.add_parser("start", help="次のサイクルの PLAN.md を作る"); s.add_argument("name"); s.set_defaults(f=cmd_start)
     s = sub.add_parser("list", help="締めたサイクルの一覧"); s.set_defaults(f=cmd_list)

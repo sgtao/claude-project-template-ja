@@ -222,12 +222,21 @@ def t_cycle(tmp):
     r = run(T / "conv.py", "new", "third", "--date", "0101")
     ok(r.stdout.strip().endswith("0101-03_third.md"), f"移した記録と番号が重ならない（{r.stdout.strip()}）")
 
+    print("cycle：版の途中で作ったフォルダに --merge で足す")
+    pre = proj / "05_logs" / "v0-0-2"
+    pre.mkdir()
+    (pre / "README.md").write_text("先に置いた計画の説明\n", encoding="utf-8")
+    ok(run(T / "cycle.py", "close", "v0-0-2").returncode == 1, "既存のフォルダには --merge なしでは足さない（負例）")
+    r = run(T / "cycle.py", "close", "v0-0-2", "--merge", "--keep", "0101-02", "--apply")
+    ok(r.returncode == 0 and (pre / "README_cycle.md").exists()
+       and (pre / "README.md").read_text(encoding="utf-8") == "先に置いた計画の説明\n", "--merge で既存の README.md を残して足す")
+
     print("cycle：次の計画を始める")
-    r = run(T / "cycle.py", "start", "v0-0-2")
+    r = run(T / "cycle.py", "start", "v0-0-3")
     plan = proj / "PLAN.md"
     ok(r.returncode == 0 and plan.exists() and "{{" not in plan.read_text(encoding="utf-8")
-       and "05_logs/v0-0-1/" in plan.read_text(encoding="utf-8"), "start で PLAN.md ができ、前の記録を指す")
-    ok(run(T / "cycle.py", "start", "v0-0-3").returncode == 1, "PLAN.md があると start は止まる（負例）")
+       and "05_logs/v0-0-2/" in plan.read_text(encoding="utf-8"), "start で PLAN.md ができ、最後に締めた記録を指す")
+    ok(run(T / "cycle.py", "start", "v0-0-4").returncode == 1, "PLAN.md があると start は止まる（負例）")
 
 
 def t_adopt(tmp):
@@ -271,6 +280,24 @@ def t_adopt(tmp):
     ok(r.returncode == 0 and "## 今の状態（後付け）" in (tgt / "SPEC.md").read_text(encoding="utf-8"),
        "後付けの SPEC.md ができる")
     ok(run(TOOLS / "adopt.py", "--target", ROOT).returncode == 1, "テンプレートそのものには入れない（負例）")
+
+    print("adopt：--update で古い版の仕組みを新しくする")
+    old = tmp / "old"
+    copy_template(old)
+    (old / "_tools" / "check_cases.py").unlink()
+    (old / "_tools" / "setup.py").write_text("# 古い版\n", encoding="utf-8")
+    (old / "_tools" / "my_check.py").write_text("# プロジェクトで足した検査\n", encoding="utf-8")
+    (old / "CLAUDE.md").write_text("# 古い版のルール\n", encoding="utf-8")
+    (old / ".claude" / "skills" / "verify").mkdir(parents=True)
+    (old / ".claude" / "skills" / "verify" / "SKILL.md").write_text("---\nname: verify\ndescription: 直した版\n---\n", encoding="utf-8")
+    r = run(TOOLS / "adopt.py", "--target", old, "--update", "--link", "--apply")
+    ok(r.returncode == 0, "adopt.py --update --apply が通る")
+    ok((old / "_tools" / "setup.py").read_text(encoding="utf-8") == (TOOLS / "setup.py").read_text(encoding="utf-8")
+       and (old / "_tools" / "check_cases.py").exists(), "テンプレートが持つファイルは新しくなり、足りないものは足される")
+    ok((old / "_tools" / "my_check.py").exists(), "プロジェクトで足したファイルは消さない")
+    ok((old / "CLAUDE.md").read_text(encoding="utf-8") == "# 古い版のルール\n", "--update では CLAUDE.md に取り込みの行を足さない")
+    ok("直した版" in (old / ".claude" / "skills" / "verify" / "SKILL.md").read_text(encoding="utf-8")
+       and "中身が違う" in r.stdout, "直した同名のスキルは上書きせず、違いを表示する")
 
 
 def main():

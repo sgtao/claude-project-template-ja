@@ -52,6 +52,15 @@ cd ../my-app && python3 _tools/doctor.py
 ```
 
 その後、`../my-app` で Claude Code を開き、`/setup-project` で始め方に「後付け」を選ぶ。
+
+古い版のこのテンプレートで始めたプロジェクトを新しくするときは `--update` を付ける。`_tools/`・`_templates/`・
+`_examples/hearing/` の中の同じ名前のファイルを新しくし、足りないスキルやフォルダを足す（ファイルは消さない）。
+プロジェクトで直したスキルと CLAUDE.md は上書きせず、違いを表示するので、見比べて手で取り込む。
+
+```bash
+python3 claude-project-template-ja/_tools/adopt.py --target ../old-project --update          # 試し
+python3 claude-project-template-ja/_tools/adopt.py --target ../old-project --update --apply
+```
 `--link` は、既存の CLAUDE.md の末尾に `@CLAUDE.template.md` の 1 行を足す（ルールが食い違うときは、既存のほうを優先する）。
 
 ## 成果物を別の git リポジトリに置く形
@@ -80,5 +89,5 @@ my-project/                 ← 作業台（仕様、記録、評価。このテ
 | 道具 | 役割 |
 |---|---|
 | `/handoff` | `HANDOFF.md` と、次のセッションの最初のメッセージを作る |
-| `/next-cycle` | `cycle.py close` で記録を `05_logs/<版>/` に締め、`cycle.py start` で次の `PLAN.md` を作る |
+| `/next-cycle` | `cycle.py close` で記録を `05_logs/<版>/` に締め、`cycle.py start` で次の `PLAN.md` を作る。版の途中から `05_logs/<版>/` に計画を置いていたときは `close --merge` |
 | `conv.py toc・find・show` | `02_conversations/` と `05_logs/*/conversations/` の両方を調べる |

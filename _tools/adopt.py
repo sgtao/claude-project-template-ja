@@ -11,13 +11,18 @@
   settings.json : なければ置く。あれば .claude/settings.template.json として置き、足りない権限を表示する（書き換えない）
   .gitignore    : 足りない行だけを末尾に足す
   README.md     : 触らない
+  --update      : 古い版のテンプレートで始めたプロジェクトを新しくする。テンプレートが持つもの（_tools/、_templates/、
+                  _examples/hearing/ の中のファイル）は同じ名前のファイルを上書きし、足りないスキル・エージェント・
+                  フォルダを足す。ファイルは消さない。同じ名前のスキル・エージェントで中身が違うものは、表示だけする
 
 使い方:
   python3 _tools/adopt.py --target ../my-app            # 試し
   python3 _tools/adopt.py --target ../my-app --apply --link
+  python3 _tools/adopt.py --target ../old-project --update          # 古い版のテンプレートを新しくする（試し）
 その後、対象のフォルダで Claude Code を開き、/setup-project で始め方に「後付け」を選ぶ。
 """
 import argparse
+import filecmp
 import json
 import shutil
 import sys
@@ -34,10 +39,26 @@ def ignore(_, names):
     return [n for n in names if n in SKIP or n.endswith(".pyc")]
 
 
-def plan(target, link):
+def tree_updates(src_dir, dst_dir):
+    """src_dir の中で、dst_dir にないか中身が違うファイルの一覧（消すものはない）。"""
+    out = []
+    for src in sorted(src_dir.rglob("*")):
+        if src.is_dir() or SKIP & set(src.parts) or src.suffix == ".pyc":
+            continue
+        dst = dst_dir / src.relative_to(src_dir)
+        if not dst.exists() or not filecmp.cmp(src, dst, shallow=False):
+            out.append((src, dst, "足す" if not dst.exists() else "上書き"))
+    return out
+
+
+def plan(target, link, update=False):
     acts, notes = [], []  # acts: (種類, 元, 先, 説明)
     for t in TREES:
         dst = target / t
+        if dst.exists() and update:
+            for src, d, how in tree_updates(ROOT / t, dst):
+                acts.append(("更新する", src, d, how))
+            continue
         acts.append(("既存のまま" if dst.exists() else "置く", ROOT / t, dst, "フォルダ"))
     for f in FILES:
         dst = target / f
@@ -47,13 +68,19 @@ def plan(target, link):
             if src.name in SKIP:
                 continue
             dst = target / ".claude" / kind / src.name
+            if dst.exists() and update and (tree_updates(src, dst) if src.is_dir() else not filecmp.cmp(src, dst, shallow=False)):
+                notes.append(f".claude/{kind}/{src.name} は新しい版と中身が違う（プロジェクトで直した可能性があるため上書きしない。"
+                             f"テンプレートの同じ場所と diff -r で見比べて、手で取り込む）")
             acts.append(("既存のまま" if dst.exists() else "置く", src, dst, f"{kind} の同名あり" if dst.exists() else ""))
     claude = target / "CLAUDE.md"
     if not claude.exists():
         acts.append(("置く", ROOT / "CLAUDE.md", claude, ""))
     else:
         acts.append(("置く", ROOT / "CLAUDE.md", target / "CLAUDE.template.md", "既存の CLAUDE.md は変えない"))
-        if link:
+        if update:
+            notes.append("CLAUDE.md は古い版のテンプレートから始めたものとして扱い、変えない。CLAUDE.template.md（新しい版）と"
+                         "見比べて、要る行を手で取り込み、CLAUDE.template.md は消してよい（--link は使わない。ルールが二重になるため）")
+        elif link:
             if "@CLAUDE.template.md" in claude.read_text(encoding="utf-8"):
                 notes.append("CLAUDE.md はすでに @CLAUDE.template.md を取り込んでいる")
             else:
@@ -90,15 +117,17 @@ def main():
     ap.add_argument("--target", required=True, help="既存のプロジェクトのフォルダ")
     ap.add_argument("--apply", action="store_true", help="実行する（既定は試し）")
     ap.add_argument("--link", action="store_true", help="既存の CLAUDE.md の末尾に @CLAUDE.template.md を足す")
+    ap.add_argument("--update", action="store_true", help="古い版のテンプレートの仕組み（_tools/ など）を新しくする")
     a = ap.parse_args()
     target = Path(a.target).resolve()
     if not target.is_dir():
         sys.exit(f"フォルダがありません: {a.target}")
     if target == ROOT:
         sys.exit("テンプレートそのものには入れられません。")
-    if (target / "_tools" / "adopt.py").exists() and (target / "_templates").exists():
-        print("注意: すでにテンプレートの仕組みが入っているようです。既存のものは上書きしません。")
-    acts, notes, gi_lines = plan(target, a.link)
+    if (target / "_tools" / "setup.py").exists() and (target / "_templates").exists() and not a.update:
+        print("注意: すでにテンプレートの仕組みが入っているようです。既存のものは上書きしません。"
+              "新しい版にするなら --update を付けてください。")
+    acts, notes, gi_lines = plan(target, a.link, a.update)
     print(f"{target} に入れます（{'実行' if a.apply else '試し。何も変えていません'}）")
     for kind, _, dst, note in acts:
         print(f"  {kind:　<5} {dst.relative_to(target)}" + (f"  — {note}" if note else ""))
@@ -108,7 +137,10 @@ def main():
         print("\n実行するには --apply を付けてください。")
         return
     for kind, src, dst, _ in acts:
-        if kind == "置く":
+        if kind == "更新する":
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, dst)
+        elif kind == "置く":
             dst.parent.mkdir(parents=True, exist_ok=True)
             if src.is_dir():
                 shutil.copytree(src, dst, ignore=ignore)
