@@ -1,0 +1,18 @@
+{
+  "PROJECT_NAME": "経費精算のチェックの手順化",
+  "KIND": "craft",
+  "MODE": "new",
+  "GOAL": "毎月の経費精算の申請チェックを、新人でも同じ品質で行える手順書にし、決まった照合はスキルとスクリプトに任せる",
+  "DELIVERABLE": "手順書（Markdown）、チェックリスト、Claude Code のスキル 1 つ、照合用の Python スクリプト",
+  "CRAFT_TYPE": "both",
+  "TASK_PROFILE": "経理の担当者 1 名が毎月 1 回、約 180 分。判断の基準は担当者の頭の中にある",
+  "READER": "来月から作業を引き継ぐ新人の担当者",
+  "STACK": "Claude Code のスキル、Python 3.12 の標準ライブラリ",
+  "TARGET_DIR": "03_outputs/",
+  "SOURCES": "01_sources/ に、過去 3 か月の申請の写し（個人名は仮名）と、担当者の作業メモ",
+  "CONSTRAINTS": "支払いの承認はしない。社内規程にない判断は「確認する」にする",
+  "DONE_HINT": "過去の申請で、担当者と同じ判定になる。おかしな申請で止まる",
+  "APPROVALS": "CLAUDE.md の標準のとおり",
+  "COMMIT_POLICY": "auto",
+  "MAIN_MODEL": "opus"
+}

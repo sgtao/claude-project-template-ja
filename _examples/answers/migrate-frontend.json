@@ -1,0 +1,18 @@
+{
+  "PROJECT_NAME": "管理画面の Vue 3 への移行",
+  "KIND": "build",
+  "MODE": "migrate",
+  "GOAL": "Vue 2 と Webpack で作った社内の管理画面を、見た目と動作を変えずに Vue 3 と Vite へ移す",
+  "DELIVERABLE": "Vue 3 と Vite で動く管理画面（同じリポジトリの別ブランチ）",
+  "STACK": "Vue 3、Vite、Vitest、Playwright",
+  "CURRENT_STATE": "このリポジトリが既存の管理画面。画面は 12、単体テストが 85 件、E2E はない",
+  "MIGRATE_FROM": "Vue 2.7、Webpack 4、Vuex",
+  "MIGRATE_TO": "Vue 3.5、Vite 6、Pinia",
+  "TARGET_DIR": "このリポジトリそのもの（ブランチ migrate/vue3）",
+  "SOURCES": "今のリポジトリ、画面一覧のスプレッドシート",
+  "CONSTRAINTS": "API の仕様は変えない。移行の途中も main は動く状態に保つ",
+  "DONE_HINT": "12 画面がすべて同じに見える、テストが全部通る、ビルドが速くなる",
+  "APPROVALS": "パッケージの追加インストール、main へのマージ",
+  "COMMIT_POLICY": "auto",
+  "MAIN_MODEL": "opus"
+}

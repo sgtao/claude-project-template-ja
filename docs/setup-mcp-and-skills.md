@@ -9,7 +9,9 @@ Claude Code でこのリポジトリを開くと、スラッシュコマンド�
 |---|---|
 | `/setup-project` | ヒアリング形式の初期セットアップ |
 | `/milestone` | マイルストーンを 1 つ進める。作業の再開にも使う |
-| `/verify` | 機械検査、独立した審査、仕込み検査 |
+| `/verify` | 機械検査、実物の通し、独立した審査、仕込み検査 |
+| `/handoff` | 引き継ぎメモと、次のセッションの最初のメッセージを作る |
+| `/next-cycle` | 版を締めて記録を `05_logs/` に移し、次の版の計画（`PLAN.md`）を作る |
 | `/retro` | 履歴から、ルール・合格条件・検査の修正案を作る |
 
 ### サブエージェント（`.claude/agents/`）
@@ -62,6 +64,7 @@ claude mcp add --scope project playwright -- npx -y @playwright/mcp@latest
 - `.claude/skills/<名前>/SKILL.md` を作る。先頭に `name` と `description` を書く。
   `description` には、どんな言葉で呼ばれたら使うかを書く
 - 手順は、番号を付けて短く書く。確かめられる手順は `_tools/` のスクリプトにして、スキルから呼ぶ
+- 書いたら `python3 _tools/check_skill.py .claude/skills/<名前>` で形を確かめる
 - `/retro` で同じ手順の指摘が 2 回出たら、スキルにする合図
 
 ## 設定の書式が変わったとき

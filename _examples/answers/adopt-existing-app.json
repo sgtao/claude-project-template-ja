@@ -1,0 +1,16 @@
+{
+  "PROJECT_NAME": "家計簿アプリの続き",
+  "KIND": "build",
+  "MODE": "adopt",
+  "GOAL": "途中まで作った家計簿の Web アプリに、検索とグラフの機能を足して仕上げる",
+  "DELIVERABLE": "今のリポジトリのまま、検索とグラフが動く版（v1.0）",
+  "STACK": "今のまま（Next.js、SQLite）",
+  "CURRENT_STATE": "このフォルダが既存のリポジトリ。v0.8 が動いていて、Jest のテストが 40 件。検索は途中まで",
+  "TARGET_DIR": "このリポジトリそのもの",
+  "SOURCES": "今のリポジトリ、README の TODO 一覧",
+  "CONSTRAINTS": "もとの README と CLAUDE.md のルールを守る。データの形式は変えない",
+  "DONE_HINT": "検索が 1 秒以内、グラフが月ごとに出る、今のテストが全部通る",
+  "APPROVALS": "CLAUDE.md の標準のとおり",
+  "COMMIT_POLICY": "ask",
+  "MAIN_MODEL": "sonnet"
+}

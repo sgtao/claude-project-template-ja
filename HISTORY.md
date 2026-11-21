@@ -66,7 +66,7 @@ python3 _tools/conv.py add --q-title "質問の短い題名" --q-file /tmp/q.txt
 マイルストーンを 3 つ終えたとき、または同じ種類の指摘が 2 回出たときに、`/retro` を提案する。
 `/retro` は、`DECISIONS.md` と会話の記録から繰り返しを探し、次のどれかの修正案を出す。
 - `CLAUDE.md` のルールの追加・削除
-- `SPEC.md`／`BRIEF.md` の合格条件の追加
+- `SPEC.md`／`BRIEF.md`／`PLAYBOOK.md` の合格条件の追加
 - `_tools/` の検査の追加
 - スキルの手順の修正
 

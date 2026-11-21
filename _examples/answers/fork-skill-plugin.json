@@ -1,0 +1,21 @@
+{
+  "PROJECT_NAME": "解説コンテンツ作りのプラグイン",
+  "KIND": "craft",
+  "MODE": "fork",
+  "GOAL": "手元にある 4 つのスキルを複製して 1 つのプラグインにまとめ、1 度の指示で解説メモとスライドまで作れるようにする",
+  "DELIVERABLE": "Claude Code のプラグイン（marketplace 形式の git リポジトリ）、install.sh、README",
+  "CRAFT_TYPE": "automate",
+  "TASK_PROFILE": "自分が週に 2〜3 回、1 回 30 分ほど。4 つのスキルを順に呼んでいる",
+  "READER": "ユーザー本人と、プラグインを入れて使う人",
+  "STACK": "Markdown、Python、Node.js",
+  "UPSTREAM": "01_sources/ の 4 つのスキルのリポジトリ（各リポジトリの main の最新コミット）",
+  "UPSTREAM_LICENSE": "未確認（最初の作業で、複製元の LICENSE を確かめて書く）",
+  "SYNC_POLICY": "undecided",
+  "TARGET_DIR": "03_outputs/<プラグイン名>/（別の git リポジトリにする）",
+  "SOURCES": "01_sources/ の 4 つのスキルのリポジトリと、その tests/",
+  "CONSTRAINTS": "新しい複雑なスキルは足さない。複製元のテストは通したまま保つ",
+  "DONE_HINT": "1 度の指示で最後まで通る。実物の入力 3 件で出力の形の検査が通る",
+  "APPROVALS": "git push、タグ、複製元のリポジトリへの変更",
+  "COMMIT_POLICY": "ask",
+  "MAIN_MODEL": "opus"
+}
