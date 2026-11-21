@@ -171,6 +171,65 @@ def t_checks(tmp):
         ok(run(TOOLS / "check_spec.py", p).returncode == 1, f"check_spec：{name}")
 
 
+def copy_template(dest):
+    """テンプレートの仕組みだけを一時フォルダに写す（試しのプロジェクト）。"""
+    for d in ("_tools", "_templates", "_examples/hearing"):
+        shutil.copytree(ROOT / d, dest / d)
+    for d in ("02_conversations", "04_evals", "05_logs"):
+        (dest / d).mkdir(parents=True, exist_ok=True)
+        shutil.copy2(ROOT / d / "README.md", dest / d / "README.md")
+    return dest
+
+
+def t_cycle(tmp):
+    proj = copy_template(tmp / "proj")
+    T = proj / "_tools"
+    af = tmp / "a.json"
+    af.write_text(json.dumps(base_answers("craft", "new"), ensure_ascii=False), encoding="utf-8")
+    ok(run(T / "setup.py", "--answers", af).returncode == 0, "cycle：試しのプロジェクトを setup する")
+    r1 = run(T / "conv.py", "new", "first-talk", "--title", "最初の会話", "--date", "0101")
+    run(T / "conv.py", "add", "--q-title", "質問 1", "--q", "目印の質問 ZQX", "--a", "回答")
+    r2 = run(T / "conv.py", "new", "keep-talk", "--date", "0101")
+    ok(r1.returncode == 0 and r2.returncode == 0, "cycle：会話の記録を 2 件作る")
+    (proj / "04_evals" / "0101-01_run").mkdir()
+    (proj / "04_evals" / "0101-01_run" / "README.md").write_text("実行の記録\n", encoding="utf-8")
+    (proj / "PLAN.md").write_text("# 計画\n", encoding="utf-8")
+
+    print("cycle：試し（--apply なし）では何も変えない")
+    before = sorted(p.relative_to(proj).as_posix() for p in proj.rglob("*") if p.is_file())
+    r = run(T / "cycle.py", "close", "v0-0-1", "--keep", "0101-02")
+    after = sorted(p.relative_to(proj).as_posix() for p in proj.rglob("*") if p.is_file())
+    ok(r.returncode == 0 and before == after, "close の試しでファイルが変わらない")
+
+    print("cycle：--apply で締める")
+    r = run(T / "cycle.py", "close", "v0-0-1", "--keep", "0101-02", "--apply")
+    log = proj / "05_logs" / "v0-0-1"
+    ok(r.returncode == 0, "close --apply が通る" + (f"（{r.stderr.strip()[:120]}）" if r.returncode else ""))
+    ok((log / "PLAYBOOK.v0-0-1.md").exists() and (proj / "PLAYBOOK.md").exists(), "仕様のファイルは写し（直下に残る）")
+    ok((log / "PLAN.md").exists() and not (proj / "PLAN.md").exists(), "PLAN.md は移る")
+    ok((log / "conversations" / "0101-01_first-talk.md").exists(), "会話の記録が移る")
+    ok((proj / "02_conversations" / "0101-02_keep-talk.md").exists(), "--keep の会話は直下に残る")
+    ok((log / "evals" / "0101-01_run" / "README.md").exists() and (proj / "04_evals" / "cases.csv").exists(),
+       "実行記録は移り、cases.csv は残る")
+    ok((log / "README.md").exists(), "05_logs/v0-0-1/README.md ができる")
+    ok(run(T / "cycle.py", "close", "v0-0-1").returncode == 1, "同じ名前で 2 回締めると止まる（負例）")
+
+    print("cycle：移した会話を conv.py で引ける")
+    r = run(T / "conv.py", "show", "0101-01", "1")
+    ok(r.returncode == 0 and "ZQX" in r.stdout, "conv.py show で移した記録を表示できる")
+    r = run(T / "conv.py", "find", "ZQX")
+    ok("0101-01 Q1" in r.stdout, "conv.py find で移した記録を見つける")
+    r = run(T / "conv.py", "new", "third", "--date", "0101")
+    ok(r.stdout.strip().endswith("0101-03_third.md"), f"移した記録と番号が重ならない（{r.stdout.strip()}）")
+
+    print("cycle：次の計画を始める")
+    r = run(T / "cycle.py", "start", "v0-0-2")
+    plan = proj / "PLAN.md"
+    ok(r.returncode == 0 and plan.exists() and "{{" not in plan.read_text(encoding="utf-8")
+       and "05_logs/v0-0-1/" in plan.read_text(encoding="utf-8"), "start で PLAN.md ができ、前の記録を指す")
+    ok(run(T / "cycle.py", "start", "v0-0-3").returncode == 1, "PLAN.md があると start は止まる（負例）")
+
+
 def main():
     names = sys.argv[1:] or ["setup", "checks", "cycle", "adopt"]
     tests = {n[2:]: f for n, f in globals().items() if n.startswith("t_")}

@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """会話履歴（02_conversations/）の作成・追記・検索ツール。標準ライブラリのみで動く。
 
+toc・find・show は、締めたサイクルの記録（05_logs/*/conversations/）も見る。
+new・add（番号の省略時）は、02_conversations/ だけを対象にする。
+
 使い方:
   python3 _tools/conv.py new <kebab-case-topic> --title "題名"
   python3 _tools/conv.py add --q-title "短い題名" --q-file q.txt --a-file a.md [--changed PATH ...]
@@ -17,17 +20,23 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CONV = ROOT / "02_conversations"
+LOGS = ROOT / "05_logs"
 END = "-----\n[toTop](#totoppage)\n"
 NAME_RE = re.compile(r"^(\d{4})-(\d{2})_(.+)\.md$")
 SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv"}
 
 
-def conv_files():
-    """記録ファイルを新しい順（更新時刻）で返す。"""
-    if not CONV.is_dir():
-        return []
-    fs = [p for p in CONV.glob("*.md") if NAME_RE.match(p.name)]
+def conv_files(archive=True):
+    """記録ファイルを新しい順（更新時刻）で返す。archive なら 05_logs/*/conversations/ も含める。"""
+    fs = [p for p in CONV.glob("*.md") if NAME_RE.match(p.name)] if CONV.is_dir() else []
+    if archive and LOGS.is_dir():
+        fs += [p for p in LOGS.glob("*/conversations/*.md") if NAME_RE.match(p.name)]
     return sorted(fs, key=lambda p: (p.stat().st_mtime, p.name), reverse=True)
+
+
+def where_label(path):
+    """02_conversations 以外にある記録には、場所を添える。"""
+    return "" if path.parent == CONV else f"  [{path.parent.relative_to(ROOT).as_posix()}]"
 
 
 def number_of(path):
@@ -54,8 +63,8 @@ def split_qas(text):
     return out
 
 
-def resolve(ref):
-    fs = conv_files()
+def resolve(ref, archive=True):
+    fs = conv_files(archive)
     if not fs:
         sys.exit("記録ファイルがありません。先に `conv.py new` を実行してください。")
     if ref in (None, "latest"):
@@ -81,7 +90,7 @@ def cmd_new(a):
         sys.exit("話題は kebab-case（英小文字・数字・ハイフン）で指定してください。例: setup-spec")
     CONV.mkdir(exist_ok=True)
     mmdd = a.date or datetime.date.today().strftime("%m%d")
-    nums = [int(m.group(2)) for p in CONV.glob("*.md")
+    nums = [int(m.group(2)) for p in conv_files()
             if (m := NAME_RE.match(p.name)) and m.group(1) == mmdd]
     name = f"{mmdd}-{max(nums, default=0) + 1:02d}_{a.topic}.md"
     head = (
@@ -98,7 +107,7 @@ def cmd_new(a):
 
 
 def cmd_add(a):
-    path = resolve(a.file)
+    path = resolve(a.file, archive=False)  # 締めたサイクルの記録には書き足さない
     q = read_arg(a.q, a.q_file)
     ans = read_arg(a.a, a.a_file)
     if q is None or ans is None:
@@ -117,7 +126,7 @@ def cmd_add(a):
 def cmd_toc(a):
     for p in sorted(conv_files(), key=lambda p: p.name):
         text = p.read_text(encoding="utf-8")
-        print(f"{number_of(p)}  {title_of(text)}  ({p.name})")
+        print(f"{number_of(p)}  {title_of(text)}  ({p.name}){where_label(p)}")
         for n, title, _ in split_qas(text):
             print(f"    Q{n}  {title}")
 
@@ -143,7 +152,7 @@ def cmd_show(a):
     n = int(str(a.q).lstrip("Qq"))
     if not 1 <= n <= len(qas):
         sys.exit(f"{number_of(p)} の Q は 1〜{len(qas)} です。")
-    print(f"# {number_of(p)} Q{n}（{p.name}）\n{qas[n - 1][2]}")
+    print(f"# {number_of(p)} Q{n}（{p.relative_to(ROOT).as_posix()}）\n{qas[n - 1][2]}")
 
 
 def cmd_where(a):
