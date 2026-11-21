@@ -230,6 +230,49 @@ def t_cycle(tmp):
     ok(run(T / "cycle.py", "start", "v0-0-3").returncode == 1, "PLAN.md があると start は止まる（負例）")
 
 
+def t_adopt(tmp):
+    tgt = tmp / "existing"
+    (tgt / ".claude" / "skills" / "verify").mkdir(parents=True)
+    keep = {"CLAUDE.md": "# 既存のルール\n- テストは pytest\n", "README.md": "# 既存の README\n",
+            ".claude/settings.json": json.dumps({"permissions": {"allow": ["Bash(pytest*)"]}}),
+            ".claude/skills/verify/SKILL.md": "---\nname: verify\ndescription: 既存の同名スキル\n---\n",
+            ".gitignore": "node_modules/\n"}
+    for f, body in keep.items():
+        (tgt / f).write_text(body, encoding="utf-8")
+    snap = {f: (tgt / f).read_text(encoding="utf-8") for f in keep}
+
+    print("adopt：試し（--apply なし）では何も変えない")
+    r = run(TOOLS / "adopt.py", "--target", tgt)
+    files = sorted(p.relative_to(tgt).as_posix() for p in tgt.rglob("*") if p.is_file())
+    ok(r.returncode == 0 and files == sorted(keep), "試しでファイルが増えない")
+
+    print("adopt：--apply --link")
+    r = run(TOOLS / "adopt.py", "--target", tgt, "--apply", "--link")
+    ok(r.returncode == 0, "adopt.py --apply が通る" + (f"（{r.stderr.strip()[:120]}）" if r.returncode else ""))
+    for f in ("README.md", ".claude/settings.json", ".claude/skills/verify/SKILL.md"):
+        ok((tgt / f).read_text(encoding="utf-8") == snap[f], f"既存の {f} を上書きしない")
+    claude = (tgt / "CLAUDE.md").read_text(encoding="utf-8")
+    ok(claude.startswith(snap["CLAUDE.md"]) and "@CLAUDE.template.md" in claude, "既存の CLAUDE.md は残し、取り込みの 1 行だけ足す")
+    gi = (tgt / ".gitignore").read_text(encoding="utf-8")
+    ok(gi.startswith("node_modules/") and gi.count("node_modules/") == 1 and ".env" in gi, ".gitignore は足りない行だけ足す")
+    for f in ("CLAUDE.template.md", "HISTORY.md", "_tools/setup.py", "_templates/_PLAYBOOK.md",
+              ".claude/skills/milestone/SKILL.md", ".claude/agents/reviewer.md", ".claude/settings.template.json",
+              "05_logs/README.md", "_examples/hearing/questions.json"):
+        ok((tgt / f).exists(), f"{f} を置く")
+    ok("足りないもの" in r.stdout, "既存の settings.json に足りない権限を表示する")
+    r2 = run(TOOLS / "adopt.py", "--target", tgt, "--apply", "--link")
+    ok(r2.returncode == 0 and (tgt / "CLAUDE.md").read_text(encoding="utf-8").count("@CLAUDE.template.md") == 1,
+       "2 回目は何も重ねない（取り込みの行は 1 つのまま）")
+
+    print("adopt：入れた後に setup（始め方＝後付け）が通る")
+    af = tmp / "a.json"
+    af.write_text(json.dumps(base_answers("build", "adopt"), ensure_ascii=False), encoding="utf-8")
+    r = run(tgt / "_tools" / "setup.py", "--answers", af)
+    ok(r.returncode == 0 and "## 今の状態（後付け）" in (tgt / "SPEC.md").read_text(encoding="utf-8"),
+       "後付けの SPEC.md ができる")
+    ok(run(TOOLS / "adopt.py", "--target", ROOT).returncode == 1, "テンプレートそのものには入れない（負例）")
+
+
 def main():
     names = sys.argv[1:] or ["setup", "checks", "cycle", "adopt"]
     tests = {n[2:]: f for n, f in globals().items() if n.startswith("t_")}
