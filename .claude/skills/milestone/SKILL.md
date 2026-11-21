@@ -8,7 +8,7 @@ description: マイルストーンを 1 つ、検査が通るまで実行し、�
 ## 手順
 
 1. **現状をつかむ**：`PROGRESS.md`、記入済みの `SPEC.md`・`BRIEF.md`・`PLAYBOOK.md`、`git log --oneline -5` を読む。
-   `PLAN.md`（サイクルの計画）や `HANDOFF.md`（引き継ぎメモ）があれば、それも読む。現状を 3 行でまとめる。
+   `PLAN.md`（サイクルの計画）や 最新の引き継ぎメモ（`python3 _tools/handoff.py latest`）があれば、それも読む。現状を 3 行でまとめる。
    `PROGRESS.md` とコードや成果物が食い違うときは、コードや成果物を正とし、`PROGRESS.md` を直す。
 2. **対象を決める**：指定がなければ、未完の最初のマイルストーン。範囲外には手を付けない。
 3. **検査を先に用意する**

@@ -32,7 +32,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 TREES = ["_tools", "_templates", "_examples/hearing"]
-FILES = ["HISTORY.md", "02_conversations/README.md", "05_evals/README.md", "04_logs/README.md"]
+FILES = ["HISTORY.md", "02_conversations/README.md", "05_evals/README.md", "04_logs/README.md", "06_handoff/README.md"]
 MARK = "# --- claude-project-template-ja ---"
 # 既存のフォルダ・ファイルがテンプレートのものかを見分ける目印（ないときは名前がぶつかっているとみなして止める）
 OWN = {"_tools": "_tools/setup.py", "_templates": "_templates/_SPEC.md",

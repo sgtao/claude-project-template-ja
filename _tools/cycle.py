@@ -6,7 +6,7 @@
   close <名前>  : 今のサイクルの記録を 04_logs/<名前>/ にまとめる。既定は試し（何も変えずに予定だけ出す）。
                   --apply で実行する。
                   写す（直下に残す）: 仕様のファイル、PROGRESS.md、DECISIONS.md、05_evals/cases.csv
-                  移す（直下から消える）: PLAN.md、HANDOFF.md、MANUAL-CHECK.md、02_conversations/ の記録、
+                  移す（直下から消える）: PLAN.md、HANDOFF.md（旧い形）、MANUAL-CHECK.md、06_handoff/ のメモ、02_conversations/ の記録、
                                           05_evals/ の実行記録（cases.csv と README.md を除く）
                   05_evals/cases.csv は、写しの証拠のパスを移した先に直し、直下のほうは result を「未実行」、
                   evidence を空に戻す（前の版の結果は note に残す）。次の版で評価をやり直すため
@@ -67,6 +67,10 @@ def plan_close(cycle, keep):
         m = CONV_RE.match(p.name)
         if m and m.group(1) not in keep:
             acts.append(("移す", p, dest / "conversations" / p.name))
+    ho = ROOT / "06_handoff"
+    for p in sorted(ho.glob("*.md")) if ho.is_dir() else []:
+        if p.name != "README.md":
+            acts.append(("移す", p, dest / "handoff" / p.name))
     ev = ROOT / "05_evals"
     for p in sorted(ev.iterdir()) if ev.is_dir() else []:
         if p.name in ("README.md", ".DS_Store", ".gitkeep"):

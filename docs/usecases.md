@@ -91,6 +91,6 @@ my-project/                 ← 作業台（仕様、記録、評価。このテ
 
 | 道具 | 役割 |
 |---|---|
-| `/handoff` | `HANDOFF.md` と、次のセッションの最初のメッセージを作る |
+| `/handoff` | `06_handoff/` に引き継ぎメモを作り、次のセッションの最初のメッセージを示す |
 | `/next-cycle` | `cycle.py close` で記録を `04_logs/<版>/` に締め、`cycle.py start` で次の `PLAN.md` を作る。版の途中から `04_logs/<版>/` に計画を置いていたときは `close --merge` |
 | `conv.py toc・find・show` | `02_conversations/` と `04_logs/*/conversations/` の両方を調べる |

@@ -20,7 +20,7 @@
 
 | ひな形 | 作るファイル | 作るとき |
 |---|---|---|
-| `_HANDOFF.md` | `HANDOFF.md` | `/handoff` |
+| `_HANDOFF.md` | `06_handoff/<MMDD-NN>_<話題>.md` | `/handoff`（`handoff.py new`） |
 | `_MANUAL-CHECK.md` | `MANUAL-CHECK.md` | `/verify` の実物の通しで、対話でしか確かめられない動作があるとき |
 | `_PLAN.md` | `PLAN.md` | `/next-cycle`（`cycle.py start`） |
 

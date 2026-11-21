@@ -78,6 +78,7 @@ python3 claude-project-template-ja/_tools/adopt.py --target my-app --apply --lin
 | `03_outputs/` | 成果物を置く（別の git リポジトリにしてもよい → [docs/usecases.md](docs/usecases.md)） |
 | `05_evals/` | 評価の実行記録（実物の入力を通した入出力）と、評価ケース表 |
 | `04_logs/` | 締めた版の記録（仕様の写し、計画、引き継ぎ、会話、評価） |
+| `06_handoff/` | 引き継ぎメモ（セッションの区切りごと） |
 | `_tools/` | 検査・記録・セットアップのスクリプト（Python の標準ライブラリだけで動く）→ [一覧](_tools/README.md) |
 | `_examples/` | ヒアリングの質問、答えとプロンプトの見本、検査の見本 → [説明](_examples/README.md) |
 | `.claude/skills/` | スキル：`setup-project`、`milestone`、`verify`、`handoff`、`next-cycle`、`retro` |
@@ -95,7 +96,7 @@ python3 claude-project-template-ja/_tools/adopt.py --target my-app --apply --lin
 | `PROGRESS.md` | 現在地、チェックリスト、次の一手。セッションをまたぐ記憶 | セットアップ |
 | `DECISIONS.md` | 決めたことと、失敗から決めたルールの台帳 | セットアップ |
 | `KICKOFF.md` | 最初のプロンプト（対象と始め方で中身が違う） | セットアップ |
-| `HANDOFF.md` | 引き継ぎメモと、次のセッションの最初のメッセージ | `/handoff` |
+| `06_handoff/` | 引き継ぎメモ（日付と連番のファイル） | `/handoff` |
 | `MANUAL-CHECK.md` | 対話でしか確かめられない動作を、人が確かめる手順 | `/verify` |
 | `PLAN.md` | 次の版の改修計画（承認の後、仕様のファイルに反映する） | `/next-cycle` |
 
@@ -106,7 +107,7 @@ python3 claude-project-template-ja/_tools/adopt.py --target my-app --apply --lin
 
 1. **完成を数えられる形にする**：合格条件は 10 個以内で、スクリプトか画像で確かめられるものにする
 2. **最初に最後まで通す**：粗い最小版で、出力までの道を先に確かめる
-3. **記憶をファイルに出す**：1 マイルストーン 1 セッション。次は `PROGRESS.md` と `HANDOFF.md` から再開する
+3. **記憶をファイルに出す**：1 マイルストーン 1 セッション。次は `PROGRESS.md` と最新の引き継ぎメモ（`python3 _tools/handoff.py latest`）から再開する
 4. **検査を機械にする**：制作はテストと画像、知的作業は証拠台帳、専門作業は評価ケース。通るまで次へ進まない
 5. **検査そのものを疑う**：新しい検査は、わざと壊した入力で落ちることを確かめる。完成の前に、実物の入力を実際の手順で通す
 6. **別の目で見る**：制作の経緯を知らない審査役に見せ、仕込み検査で審査そのものを確かめる

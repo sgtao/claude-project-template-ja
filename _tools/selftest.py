@@ -189,7 +189,7 @@ def copy_template(dest):
     """テンプレートの仕組みだけを一時フォルダに写す（試しのプロジェクト）。"""
     for d in ("_tools", "_templates", "_examples/hearing"):
         shutil.copytree(ROOT / d, dest / d)
-    for d in ("02_conversations", "05_evals", "04_logs"):
+    for d in ("02_conversations", "05_evals", "04_logs", "06_handoff"):
         (dest / d).mkdir(parents=True, exist_ok=True)
         shutil.copy2(ROOT / d / "README.md", dest / d / "README.md")
     return dest
@@ -215,6 +215,16 @@ def t_cycle(tmp):
                      "C-03,負例,a,止まる,合格,0101-01_run/README.md,\n", encoding="utf-8")
     ok(run(T / "check_cases.py", cases).returncode == 0, "cycle：締める前の cases.csv が合格")
 
+    print("handoff：メモの作成と最新の検索")
+    ok(run(T / "handoff.py", "latest").returncode == 1, "メモがないと latest は止まる（負例）")
+    ok(run(T / "handoff.py", "new", "Bad Topic").returncode == 1, "話題に空白や大文字があると止まる（負例）")
+    h1 = run(T / "handoff.py", "new", "first", "--date", "0101")
+    h2 = run(T / "handoff.py", "new", "second", "--date", "0101")
+    ok(h1.stdout.strip() == "06_handoff/0101-01_first.md" and h2.stdout.strip() == "06_handoff/0101-02_second.md"
+       and (proj / h2.stdout.strip()).read_text(encoding="utf-8") == (proj / "_templates" / "_HANDOFF.md").read_text(encoding="utf-8"),
+       "new が連番のメモをひな形から作る")
+    ok(run(T / "handoff.py", "latest").stdout.strip() == "06_handoff/0101-02_second.md", "latest が最新（同日は連番の大きいほう）を返す")
+
     print("cycle：試し（--apply なし）では何も変えない")
     before = sorted(p.relative_to(proj).as_posix() for p in proj.rglob("*") if p.is_file())
     r = run(T / "cycle.py", "close", "v0-0-1", "--keep", "0101-02")
@@ -232,6 +242,11 @@ def t_cycle(tmp):
     ok((log / "evals" / "0101-01_run" / "README.md").exists() and (proj / "05_evals" / "cases.csv").exists(),
        "実行記録は移り、cases.csv は残る")
     ok((log / "README.md").exists(), "04_logs/v0-0-1/README.md ができる")
+    ok((log / "handoff" / "0101-02_second.md").exists() and not (proj / "06_handoff" / "0101-02_second.md").exists()
+       and (proj / "06_handoff" / "README.md").exists(), "06_handoff/ のメモは移り、README.md は残る")
+    h3 = run(T / "handoff.py", "new", "after", "--date", "0101")
+    ok(h3.stdout.strip() == "06_handoff/0101-03_after.md", f"締めた版のメモと番号が重ならない（{h3.stdout.strip()}）")
+    (proj / "06_handoff" / "0101-03_after.md").unlink()
     ok(run(T / "check_cases.py", log / "evals" / "cases.csv").returncode == 0, "写しの cases.csv は、移した証拠を指して合格のまま")
     body = cases.read_text(encoding="utf-8")
     ok(body.count("未実行") == 3 and "合格" not in body.replace("前の版 v0-0-1: 合格", "") and "前の版 v0-0-1" in body,
