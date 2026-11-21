@@ -1,19 +1,23 @@
 ---
 name: setup-project
-description: テンプレートから始めたリポジトリの初期セットアップを、ヒアリング形式で行う。「セットアップして」「プロジェクトを始めたい」「初期設定」と言われたとき、または SPEC.md と BRIEF.md がどちらもない（セットアップ前）ときに使う。
+description: テンプレートから始めたリポジトリの初期セットアップを、ヒアリング形式で行う。新規・後付け・移行・複製して改造の 4 つの始め方と、制作・知的作業・専門作業の 3 つの対象に対応する。「セットアップして」「プロジェクトを始めたい」「初期設定」「既存のプロジェクトに入れたい」「移行したい」「複製して改造したい」と言われたとき、または SPEC.md・BRIEF.md・PLAYBOOK.md がどれもない（セットアップ前）ときに使う。
 ---
 
 # setup-project：ヒアリング形式の初期セットアップ
 
 答えを集めて `_tools/setup.py` に渡し、`_templates/` のひな形から、リポジトリの直下に
-`SPEC.md`（制作）か `BRIEF.md`（知的作業）、最初のプロンプト `KICKOFF.md`、`PROGRESS.md`、`DECISIONS.md`
-（知的作業は `LEDGER.csv` も）を作る。質問・選択肢はすべて日本語で書く。
+`SPEC.md`（制作）・`BRIEF.md`（知的作業）・`PLAYBOOK.md`（専門作業）のどれか、最初のプロンプト `KICKOFF.md`、
+`PROGRESS.md`、`DECISIONS.md`（知的作業は `LEDGER.csv`、専門作業は `04_evals/cases.csv` も）を作る。質問・選択肢はすべて日本語で書く。
 
 ## 手順
 
-1. 直下に `SPEC.md` か `BRIEF.md` がすでにあれば、セットアップ済みとして止まり、やり直すかを聞く。
+1. 直下に `SPEC.md`・`BRIEF.md`・`PLAYBOOK.md` のどれかがすでにあれば、セットアップ済みとして止まり、やり直すかを聞く。
    `_examples/hearing/questions.json` を読む。質問の正本はこのファイルで、ここに質問を書き足さない。
-2. ユーザーの最初の依頼文から答えが分かる項目は、聞かずに埋める。
+2. ユーザーの最初の依頼文から答えが分かる項目は、聞かずに埋める。とくに始め方（`MODE`）は、
+   次の手がかりで決める：既存のコードや作業途中のフォルダの話がある → 後付け（adopt）、
+   「〜から〜へ」「置き換え」「版を上げる」→ 移行（migrate）、「〜を写して」「フォークして」「元のスキルを改造」→ 複製（fork）。
+   後付け（adopt）で、まだ既存のフォルダにテンプレートが入っていないときは、先に
+   `python3 _tools/adopt.py --target <既存のフォルダ>` を案内する（[docs/usecases.md](../../../docs/usecases.md)）。
 3. 残りを聞く。
    - `choices` のある質問は AskUserQuestion で聞く（1 回に 4 問まで。`when` の条件に合うものだけ）
    - 自由記述の質問は、1 つのメッセージにまとめて聞く。`example` を例として添える
@@ -22,7 +26,7 @@ description: テンプレートから始めたリポジトリの初期セット�
 4. 依頼が `_examples/prompts/` の例に近いときは、その例を見せて「この形でよいか」を確かめてもよい。
 5. 答えを JSON にして一時ファイルに書き、実行する。
    ```bash
-   python3 _tools/setup.py --answers /tmp/answers.json
+   python3 _tools/setup.py --answers /tmp/answers.json   # 一時ファイルは /tmp かスクラッチの場所に置く
    ```
    不備のエラーが出たら、その項目だけを聞き直す。
 6. `python3 _tools/doctor.py` を実行する。「合格条件の点検」の NG は、この時点では正常
@@ -32,6 +36,6 @@ description: テンプレートから始めたリポジトリの初期セット�
    ユーザーが「そのまま進めて」と言ったら、`KICKOFF.md` の枠の中の指示を実行する。
 
 ## やらないこと
-- セットアップの途中で、SPEC.md や BRIEF.md の中身を作り込まない（それは KICKOFF の仕事）
-- 作成済みの SPEC.md／BRIEF.md を、確認なしで上書きしない（`--force` は承認の後）
+- セットアップの途中で、SPEC.md・BRIEF.md・PLAYBOOK.md の中身を作り込まない（それは KICKOFF の仕事）
+- 作成済みの SPEC.md／BRIEF.md／PLAYBOOK.md を、確認なしで上書きしない（`--force` は承認の後）
 - `_templates/` のひな形を直接書き換えない（直下に作られたファイルを編集する）

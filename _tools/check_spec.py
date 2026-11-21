@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SPEC.md / BRIEF.md の合格条件の点検。標準ライブラリのみで動く。
+"""SPEC.md / BRIEF.md / PLAYBOOK.md の合格条件の点検。標準ライブラリのみで動く。
 
 検査すること:
   1. 未記入の箇所（{{...}} と [要記入: ...]）が残っていないか
@@ -8,7 +8,7 @@
   4. 数えられない形容詞（きれい、自然、適切 など）だけで書かれていないか（警告）
 
 使い方:
-  python3 _tools/check_spec.py            # SPEC.md と BRIEF.md のうち、あるほうを検査
+  python3 _tools/check_spec.py            # SPEC.md・BRIEF.md・PLAYBOOK.md のうち、あるものを検査
   python3 _tools/check_spec.py BRIEF.md
 """
 import re
@@ -57,7 +57,7 @@ def check(path):
 
 
 def main():
-    names = sys.argv[1:] or ["SPEC.md", "BRIEF.md"]
+    names = sys.argv[1:] or ["SPEC.md", "BRIEF.md", "PLAYBOOK.md"]
     total, found = 0, 0
     for n in names:
         p = ROOT / n if not Path(n).is_absolute() else Path(n)
@@ -67,7 +67,7 @@ def main():
         elif sys.argv[1:]:
             sys.exit(f"ファイルがありません: {n}")
     if not found:
-        sys.exit("SPEC.md も BRIEF.md もありません（セットアップ前）。"
+        sys.exit("SPEC.md・BRIEF.md・PLAYBOOK.md のどれもありません（セットアップ前）。"
                  "python3 _tools/setup.py か /setup-project を実行してください。")
     sys.exit(1 if total else 0)
 

@@ -1,5 +1,5 @@
 {
-  "_comment": "初期セットアップの質問。_tools/setup.py と /setup-project スキルの両方が、このファイルを使う。質問を足すときは、_templates/ のひな形に同じ名前の {{KEY}} を置く。",
+  "_comment": "初期セットアップの質問。_tools/setup.py と /setup-project スキルの両方が、このファイルを使う。質問を足すときは、_templates/ のひな形に同じ名前の {{KEY}} を置く。when は「キー: 当てはまる値の一覧」で、すべて満たすときだけ聞く。",
   "questions": [
     {
       "key": "PROJECT_NAME",
@@ -9,11 +9,24 @@
     },
     {
       "key": "KIND",
-      "ask": "どちらの種類の仕事ですか？",
+      "ask": "どの種類の仕事ですか？",
       "required": true,
       "choices": [
-        {"value": "build", "label": "制作（アプリ、ゲーム、映像、音楽、絵など、コードで作るもの）→ SPEC.md を使う"},
-        {"value": "knowledge", "label": "知的作業（調査、分析、レビュー、執筆、意思決定など）→ BRIEF.md を使う"}
+        {"value": "build", "label": "制作（アプリ、ゲーム、映像、音楽、絵、ツールなど、コードで作るもの）→ SPEC.md を使う"},
+        {"value": "knowledge", "label": "知的作業（調査、分析、レビュー、執筆、意思決定など）→ BRIEF.md を使う"},
+        {"value": "craft", "label": "専門作業の手順化・自動化（繰り返す作業を手順書・チェックリスト・スキル・スクリプトにする）→ PLAYBOOK.md を使う"}
+      ]
+    },
+    {
+      "key": "MODE",
+      "ask": "どの始め方ですか？",
+      "required": true,
+      "default": "new",
+      "choices": [
+        {"value": "new", "label": "新規（何もないところから作る）"},
+        {"value": "adopt", "label": "後付け（進行中の既存プロジェクトに、このテンプレートの進め方を入れて続ける）"},
+        {"value": "migrate", "label": "移行（既存のコードや成果物を、別の技術・新しい版・新しい形へ移す）"},
+        {"value": "fork", "label": "複製して改造（他のリポジトリ・スキル・OSS を写し、自分の目的に合わせて作り替える）"}
       ]
     },
     {
@@ -25,7 +38,7 @@
     {
       "key": "DELIVERABLE",
       "ask": "完成物の形を教えてください（ファイル形式、長さ、構成など）。",
-      "example": "単一の HTML ファイル／1280x720 の MP4／条項レビュー表と質問 10 問",
+      "example": "単一の HTML ファイル／1280x720 の MP4／条項レビュー表と質問 10 問／月次締めの手順書とチェック用スクリプト",
       "required": true
     },
     {
@@ -41,29 +54,99 @@
       ]
     },
     {
+      "key": "CRAFT_TYPE",
+      "ask": "専門作業を、どこまで形にしますか？",
+      "when": {"KIND": ["craft"]},
+      "required": true,
+      "choices": [
+        {"value": "document", "label": "手順書・チェックリストにする（人も Claude も同じ品質で行えるようにする）"},
+        {"value": "automate", "label": "スキル・スクリプトにする（Claude や機械に任せられる部分を自動化する）"},
+        {"value": "both", "label": "両方（手順書を正本にし、任せられる手順だけをスキル・スクリプトにする）"}
+      ]
+    },
+    {
+      "key": "TASK_PROFILE",
+      "ask": "その作業は、誰が、どのくらいの頻度で、1 回に何分ほどかけて行っていますか？",
+      "when": {"KIND": ["craft"]},
+      "example": "自分が毎月 1 回、半日（約 240 分）。手順は頭の中にだけある",
+      "default": "未指定（Claude が聞き取りで埋める）"
+    },
+    {
       "key": "READER",
-      "ask": "成果物の読み手は誰ですか？",
-      "when": {"KIND": ["knowledge"]},
-      "example": "自社の社長（法務の専門知識はない）",
+      "ask": "成果物の読み手（専門作業なら、手順書やスキルを使う人）は誰ですか？",
+      "when": {"KIND": ["knowledge", "craft"]},
+      "example": "自社の社長（法務の専門知識はない）／来月から作業を引き継ぐ新人",
       "default": "ユーザー本人"
     },
     {
       "key": "STACK",
-      "ask": "使いたい技術はありますか？（なければ空のまま。Claude が選びます）",
-      "when": {"KIND": ["build"]},
-      "example": "Three.js／Blender の Python／Web Audio",
-      "default": "指定なし（Claude が選び、理由を SPEC.md に書く）"
+      "ask": "使いたい技術や道具はありますか？（なければ空のまま。Claude が選びます）",
+      "when": {"KIND": ["build", "craft"]},
+      "example": "Three.js／Blender の Python／Claude Code のスキルと Python のスクリプト",
+      "default": "指定なし（Claude が選び、理由を仕様のファイルに書く）"
+    },
+    {
+      "key": "CURRENT_STATE",
+      "ask": "今あるもの（リポジトリや成果物の場所、動いている範囲、テストの有無、途中の作業）を教えてください。",
+      "when": {"MODE": ["adopt", "migrate"]},
+      "example": "このフォルダが既存のリポジトリ。v1.2 が動いていて、pytest が 40 件ある。未完の作業は検索機能",
+      "required": true
+    },
+    {
+      "key": "MIGRATE_FROM",
+      "ask": "移行元（今の技術・版・形）は何ですか？",
+      "when": {"MODE": ["migrate"]},
+      "example": "Vue 2 と Webpack／Excel のマクロ／v0.0.1 のフォルダ構成",
+      "required": true
+    },
+    {
+      "key": "MIGRATE_TO",
+      "ask": "移行先（新しい技術・版・形）は何ですか？",
+      "when": {"MODE": ["migrate"]},
+      "example": "Vue 3 と Vite／Python のスクリプト／plugins/ 直下の構成",
+      "required": true
+    },
+    {
+      "key": "UPSTREAM",
+      "ask": "複製元はどこですか？（URL かパス。分かればコミットやタグも）",
+      "when": {"MODE": ["fork"]},
+      "example": "https://github.com/example/skills（タグ v1.4）、01_sources/12_dev-skill-craft",
+      "required": true
+    },
+    {
+      "key": "UPSTREAM_LICENSE",
+      "ask": "複製元のライセンスは分かりますか？（分からなければ空のまま。Claude が確かめます）",
+      "when": {"MODE": ["fork"]},
+      "example": "MIT",
+      "default": "未確認（最初の作業で、複製元の LICENSE を確かめて書く）"
+    },
+    {
+      "key": "SYNC_POLICY",
+      "ask": "複製した後、複製元の更新をどう扱いますか？",
+      "when": {"MODE": ["fork"]},
+      "default": "undecided",
+      "choices": [
+        {"value": "follow", "label": "追従する（複製元の更新を取り込み続ける。差分を小さく保つ）"},
+        {"value": "detach", "label": "切り離す（写した時点から別物として育てる）"},
+        {"value": "undecided", "label": "まだ決めていない（最初の作業で Claude が案を出す）"}
+      ]
+    },
+    {
+      "key": "TARGET_DIR",
+      "ask": "成果物（コード、手順書、スキルなど）を置く場所はどこですか？",
+      "example": "03_outputs/（既定）／03_outputs/my-plugin/（別の git リポジトリにする）／このリポジトリそのもの",
+      "default": "03_outputs/"
     },
     {
       "key": "SOURCES",
-      "ask": "使う素材や資料はありますか？（ファイル名、URL、手元のデータなど）",
-      "example": "01_sources/contract.md、過去 3 年の売上 CSV",
+      "ask": "使う素材や資料はありますか？（ファイル名、URL、手元のデータ、過去の作業の実例など）",
+      "example": "01_sources/contract.md、過去 3 年の売上 CSV、先月の締めの作業メモ",
       "default": "なし"
     },
     {
       "key": "CONSTRAINTS",
       "ask": "制約や、やってほしくないことはありますか？",
-      "example": "外部ライブラリは CDN の 1 つまで／法律の最終判断はしない",
+      "example": "外部ライブラリは CDN の 1 つまで／法律の最終判断はしない／本番のデータには触らない",
       "default": "特になし"
     },
     {
@@ -77,6 +160,15 @@
       "ask": "CLAUDE.md の標準（削除、push、有料の処理、対外送信、個人情報の持ち出し）のほかに、事前に承認を求めてほしい操作はありますか？",
       "example": "パッケージの追加インストール",
       "default": "CLAUDE.md の標準のとおり"
+    },
+    {
+      "key": "COMMIT_POLICY",
+      "ask": "マイルストーンの終わりのコミットは、どうしますか？",
+      "default": "auto",
+      "choices": [
+        {"value": "auto", "label": "確認なしでコミットする（計画と差分の突き合わせは、毎回 Claude が行う）"},
+        {"value": "ask", "label": "コミットの前に、突き合わせの結果と差分の要約を見せて確認を取る"}
+      ]
     },
     {
       "key": "MAIN_MODEL",

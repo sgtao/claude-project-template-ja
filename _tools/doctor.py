@@ -16,10 +16,13 @@ REQUIRED = ["README.md", "CLAUDE.md", "HISTORY.md", ".gitignore", ".claude/setti
             "_tools/conv.py", "_tools/setup.py", "_tools/check_spec.py",
             "_templates/_SPEC.md", "_templates/_BRIEF.md", "_templates/_PROGRESS.md",
             "_templates/_DECISIONS.md", "_templates/_LEDGER.csv",
-            "_templates/_KICKOFF.build.md", "_templates/_KICKOFF.knowledge.md"]
+            "_templates/_KICKOFF.build.md", "_templates/_KICKOFF.knowledge.md",
+            "_templates/_PLAYBOOK.md", "_templates/_KICKOFF.craft.md", "_templates/_cases.csv",
+            "_templates/_MODE.md", "_templates/_KICKOFF.mode.md"]
 # セットアップで作られるファイル（仕様のファイルごと）
 CREATED = {"SPEC.md": ["PROGRESS.md", "DECISIONS.md", "KICKOFF.md"],
-           "BRIEF.md": ["PROGRESS.md", "DECISIONS.md", "KICKOFF.md", "LEDGER.csv"]}
+           "BRIEF.md": ["PROGRESS.md", "DECISIONS.md", "KICKOFF.md", "LEDGER.csv"],
+           "PLAYBOOK.md": ["PROGRESS.md", "DECISIONS.md", "KICKOFF.md", "04_evals/cases.csv"]}
 
 
 def main():
@@ -51,7 +54,7 @@ def main():
     report(len(active) <= 1, "仕様のファイルは 1 つだけ", "使わないほうを消す")
     for f in sorted({f for n in active for f in CREATED[n]}):
         report((ROOT / f).exists(), f"{f}（セットアップで作られる）",
-               f"_templates/_{f} を写すか、python3 _tools/setup.py --force でやり直す")
+               f"_templates/_{Path(f).name} を写すか、python3 _tools/setup.py --force でやり直す")
     if active:
         r = subprocess.run([sys.executable, str(ROOT / "_tools" / "check_spec.py"), *active],
                            capture_output=True, text=True)

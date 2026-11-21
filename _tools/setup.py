@@ -4,10 +4,17 @@
 質問は _examples/hearing/questions.json、ひな形は _templates/ にある。
 答えをひな形に差し込み、リポジトリのトップに次のファイルを作る（ひな形の名前から先頭の _ を外す）。
 
-  制作（build）     : SPEC.md、PROGRESS.md、DECISIONS.md、KICKOFF.md
+  制作（build）       : SPEC.md、PROGRESS.md、DECISIONS.md、KICKOFF.md
   知的作業（knowledge）: BRIEF.md、LEDGER.csv、PROGRESS.md、DECISIONS.md、KICKOFF.md
+  専門作業（craft）    : PLAYBOOK.md、04_evals/cases.csv、PROGRESS.md、DECISIONS.md、KICKOFF.md
 
-DECISIONS.md と LEDGER.csv は書き足していく台帳なので、すでにあれば --force でも上書きしない。
+DECISIONS.md、LEDGER.csv、04_evals/cases.csv は書き足していく台帳なので、すでにあれば --force でも上書きしない。
+
+ひな形の書き方:
+  {{KEY}}                     答えを入れる。答えがなければ [要記入: KEY]
+  {{> _MODE.md}}              _templates/_MODE.md の中身をその場所に入れる（入れ子は 3 段まで）
+  <!-- when KIND=build,craft MODE=fork -->  〜  <!-- end -->
+                              条件（空白区切りはすべて満たす。カンマは「または」）に合うときだけ残す。入れ子はしない
 
 使い方:
   python3 _tools/setup.py                         # 端末で対話
@@ -24,20 +31,25 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 EX = ROOT / "_examples"
 TPL = ROOT / "_templates"
-LEDGERS = {"DECISIONS.md", "LEDGER.csv"}  # 書き足していく台帳。あれば残す
+LEDGERS = {"DECISIONS.md", "LEDGER.csv", "04_evals/cases.csv"}  # 書き足していく台帳。あれば残す
+DOCS = {"build": "SPEC.md", "knowledge": "BRIEF.md", "craft": "PLAYBOOK.md"}
+SPEC_DOCS = tuple(DOCS.values())
+LABELED = ("KIND", "MODE", "WORK_TYPE", "CRAFT_TYPE", "SYNC_POLICY", "COMMIT_POLICY", "MAIN_MODEL")
 
 
-def plan_files(build):
+def plan_files(kind):
     """(ひな形, 出力するファイル名) の一覧。"""
-    doc = "SPEC.md" if build else "BRIEF.md"
+    doc = DOCS[kind]
     files = [
         (TPL / f"_{doc}", doc),
-        (TPL / ("_KICKOFF.build.md" if build else "_KICKOFF.knowledge.md"), "KICKOFF.md"),
+        (TPL / f"_KICKOFF.{kind}.md", "KICKOFF.md"),
         (TPL / "_PROGRESS.md", "PROGRESS.md"),
         (TPL / "_DECISIONS.md", "DECISIONS.md"),
     ]
-    if not build:
+    if kind == "knowledge":
         files.append((TPL / "_LEDGER.csv", "LEDGER.csv"))
+    if kind == "craft":
+        files.append((TPL / "_cases.csv", "04_evals/cases.csv"))
     return doc, files
 
 
@@ -57,9 +69,12 @@ def ask(q):
     choices = q.get("choices")
     if choices:
         for i, c in enumerate(choices, 1):
-            print(f"  {i}. {c['label']}")
+            mark = "（既定）" if c["value"] == q.get("default") else ""
+            print(f"  {i}. {c['label']}{mark}")
         while True:
             raw = input("  番号 > ").strip()
+            if not raw and q.get("default"):
+                return q["default"]
             if raw.isdigit() and 1 <= int(raw) <= len(choices):
                 return choices[int(raw) - 1]["value"]
             print("  番号で答えてください。")
@@ -83,6 +98,58 @@ def validate(questions, ans):
     return errors
 
 
+INCLUDE_RE = re.compile(r"\{\{>\s*([\w.\-]+)\s*\}\}")
+WHEN_RE = re.compile(r"^\s*<!--\s*when\s+(.+?)\s*-->\s*$")
+END_RE = re.compile(r"^\s*<!--\s*end\s*-->\s*$")
+
+
+def include(text, depth=0):
+    """{{> 名前}} を _templates/ のファイルの中身で置き換える。"""
+    if depth > 3:
+        sys.exit("ひな形の取り込み（{{> ...}}）が深すぎます。循環していないか確かめてください。")
+
+    def rep(m):
+        p = TPL / m.group(1)
+        if not p.exists():
+            sys.exit(f"ひな形がありません: _templates/{m.group(1)}")
+        return include(p.read_text(encoding="utf-8").rstrip("\n"), depth + 1)
+    return INCLUDE_RE.sub(rep, text)
+
+
+def cond_ok(cond, ans):
+    for term in cond.split():
+        key, _, vals = term.partition("=")
+        if ans.get(key) not in vals.split(","):
+            return False
+    return True
+
+
+def select(text, ans, name="ひな形"):
+    """<!-- when ... --> 〜 <!-- end --> を、答えに合うものだけ残す。"""
+    out, keep, open_at = [], True, None
+    for i, line in enumerate(text.splitlines(keepends=True), 1):
+        m = WHEN_RE.match(line)
+        if m:
+            if open_at:
+                sys.exit(f"{name} {i} 行目: when の中に when があります（{open_at} 行目から）")
+            open_at, keep = i, cond_ok(m.group(1), ans)
+            continue
+        if END_RE.match(line):
+            if not open_at:
+                sys.exit(f"{name} {i} 行目: 対応する when のない end があります")
+            open_at, keep = None, True
+            continue
+        if keep:
+            out.append(line)
+    if open_at:
+        sys.exit(f"{name} {open_at} 行目: when が end で閉じられていません")
+    return re.sub(r"\n{3,}", "\n\n", "".join(out))
+
+
+def render(src, ans):
+    return fill(select(include(src.read_text(encoding="utf-8")), ans, src.name), ans)
+
+
 def fill(text, ans):
     def rep(m):
         v = ans.get(m.group(1), "")
@@ -95,11 +162,11 @@ def main():
     ap.add_argument("--answers", help="答えの JSON ファイル")
     ap.add_argument("--out", default=str(ROOT), help="出力先（既定はリポジトリのトップ）")
     ap.add_argument("--force", action="store_true",
-                    help="作成済みの SPEC.md／BRIEF.md、KICKOFF.md、PROGRESS.md を上書きする（台帳は上書きしない）")
+                    help="作成済みの SPEC.md／BRIEF.md／PLAYBOOK.md、KICKOFF.md、PROGRESS.md を上書きする（台帳は上書きしない）")
     a = ap.parse_args()
 
     questions = load_questions()
-    done = [n for n in ("SPEC.md", "BRIEF.md", "KICKOFF.md", "PROGRESS.md") if (Path(a.out) / n).exists()]
+    done = [n for n in (*SPEC_DOCS, "KICKOFF.md", "PROGRESS.md") if (Path(a.out) / n).exists()]
     if done and not a.force:  # 答える前に止める（答えた後で無駄にしない）
         sys.exit(f"セットアップ済みです（{', '.join(done)} があります）。やり直すなら --force を付けてください。")
     if a.answers:
@@ -122,13 +189,13 @@ def main():
 
     ans["DATE"] = datetime.date.today().isoformat()
     labels = {q["key"]: {c["value"]: c["label"] for c in q.get("choices", [])} for q in questions}
-    for key in ("WORK_TYPE", "MAIN_MODEL"):
+    for key in LABELED:
         if ans.get(key):
             ans[key + "_LABEL"] = labels.get(key, {}).get(ans[key], ans[key])
 
     out = Path(a.out)
-    build = ans["KIND"] == "build"
-    doc, files = plan_files(build)
+    kind = ans["KIND"]
+    doc, files = plan_files(kind)
     ans["DOC"] = doc
     missing = [str(src.relative_to(ROOT)) for src, _ in files if not src.exists()]
     if missing:
@@ -149,7 +216,8 @@ def main():
     for src, name in files:
         if name in kept:
             continue
-        (out / name).write_text(fill(src.read_text(encoding="utf-8"), ans), encoding="utf-8")
+        (out / name).parent.mkdir(parents=True, exist_ok=True)
+        (out / name).write_text(render(src, ans), encoding="utf-8")
         written.append(name)
     ans_dir = out / "_examples" / "answers"
     ans_dir.mkdir(parents=True, exist_ok=True)
@@ -159,9 +227,9 @@ def main():
     print(f"\n作成しました: {' / '.join(written)} / _examples/answers/current.json")
     if kept:
         print(f"すでにあったため残しました: {' / '.join(kept)}")
-    other = "BRIEF.md" if build else "SPEC.md"
-    if (out / other).exists():
-        print(f"注意: 使わない {other} が残っています。不要なら消してください。")
+    for other in SPEC_DOCS:
+        if other != doc and (out / other).exists():
+            print(f"注意: 使わない {other} が残っています。不要なら消してください。")
     print("次の一手: Claude Code を開き、KICKOFF.md の枠の中を最初のメッセージとして渡してください。")
 
 

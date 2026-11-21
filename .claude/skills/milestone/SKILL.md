@@ -7,7 +7,7 @@ description: マイルストーンを 1 つ、検査が通るまで実行する�
 
 ## 手順
 
-1. **現状をつかむ**：`PROGRESS.md`、記入済みの `SPEC.md` か `BRIEF.md`、`git log --oneline -5` を読み、
+1. **現状をつかむ**：`PROGRESS.md`、記入済みの `SPEC.md`・`BRIEF.md`・`PLAYBOOK.md`、`git log --oneline -5` を読み、
    現状を 3 行でまとめる。`PROGRESS.md` とコードや成果物が食い違うときは、コードや成果物を正とし、
    `PROGRESS.md` を直す。
 2. **対象を決める**：指定がなければ、未完の最初のマイルストーン。範囲外には手を付けない。
