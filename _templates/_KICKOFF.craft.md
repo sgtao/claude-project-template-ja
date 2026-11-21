@@ -30,4 +30,4 @@ PLAYBOOK.md を、手順書やスキルを作る前に完成させてくださ�
 6. PLAYBOOK.md の要点を 10 行以内で報告し、確認を待つ
 ```
 
-PLAYBOOK.md を確認したら、次からは `/milestone` で進める（最初は、実例 1 件を最後まで通す）。
+PLAYBOOK.md を確認したら、次からは `/milestone` で進める（最初は、PLAYBOOK.md のマイルストーン表の M1）。

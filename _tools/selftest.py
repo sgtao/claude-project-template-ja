@@ -32,6 +32,13 @@ LEFTOVER = re.compile(r"\{\{|<!--\s*(when|end)\b")
 FAILS = []
 
 
+# 始め方によらず固定で書かれていた、最初のマイルストーンの言い方（仕様のファイルの M1 と食い違うもとになった）
+M1_STALE = ("最初は、実例 1 件", "最初は、対象 1 件", "最終の出力まで通る版／", "M1（最小版）",
+            "対象 1 件を最終の形まで仕上げた版", "2. 実例 1 件を通した版", "基準のテストの記録」")
+# 始め方ごとに、仕様のファイルの M1 と KICKOFF の両方に出てくるはずの言葉
+M1_KEY = {"adopt": "今の", "migrate": "基準の検査", "fork": "そのまま"}
+
+
 def ok(cond, msg):
     print(f"  {'OK ' if cond else 'NG '} {msg}")
     if not cond:
@@ -113,6 +120,13 @@ def t_setup(tmp):
             wrong = [m for md, m in MODE_MARK.items() if (m in spec) != (md == mode)]
             ok(not wrong, f"{tag} の {doc} の始め方の節が正しい {wrong}")
             ok("## 始め方" in spec, f"{tag} の {doc} に「## 始め方」がある")
+            m1 = [l for l in spec.splitlines() if l.startswith("| M1 |")]
+            ok(len(m1) == 1, f"{tag} の {doc} に M1 がちょうど 1 行ある（{len(m1)} 行）")
+            kick = (out / "KICKOFF.md").read_text(encoding="utf-8") + (out / "PROGRESS.md").read_text(encoding="utf-8")
+            clash = [w for w in M1_STALE if w in kick or w in spec]
+            key = M1_KEY.get(mode)
+            same = key is None or (m1 and key in m1[0] and key in kick)
+            ok(not clash and same, f"{tag} の KICKOFF・PROGRESS・人の確認点が {doc} の M1 と食い違わない {clash or ('' if same else key)}")
 
 
 def t_checks(tmp):
@@ -194,6 +208,12 @@ def t_cycle(tmp):
     (proj / "04_evals" / "0101-01_run").mkdir()
     (proj / "04_evals" / "0101-01_run" / "README.md").write_text("実行の記録\n", encoding="utf-8")
     (proj / "PLAN.md").write_text("# 計画\n", encoding="utf-8")
+    cases = proj / "04_evals" / "cases.csv"
+    cases.write_text("id,kind,input,expected,result,evidence,note\n"
+                     "C-01,正例,a,b,合格,0101-01_run/README.md,\n"
+                     "C-02,境界,a,b,合格,04_evals/0101-01_run/README.md,\n"
+                     "C-03,負例,a,止まる,合格,0101-01_run/README.md,\n", encoding="utf-8")
+    ok(run(T / "check_cases.py", cases).returncode == 0, "cycle：締める前の cases.csv が合格")
 
     print("cycle：試し（--apply なし）では何も変えない")
     before = sorted(p.relative_to(proj).as_posix() for p in proj.rglob("*") if p.is_file())
@@ -212,6 +232,12 @@ def t_cycle(tmp):
     ok((log / "evals" / "0101-01_run" / "README.md").exists() and (proj / "04_evals" / "cases.csv").exists(),
        "実行記録は移り、cases.csv は残る")
     ok((log / "README.md").exists(), "05_logs/v0-0-1/README.md ができる")
+    ok(run(T / "check_cases.py", log / "evals" / "cases.csv").returncode == 0, "写しの cases.csv は、移した証拠を指して合格のまま")
+    body = cases.read_text(encoding="utf-8")
+    ok(body.count("未実行") == 3 and "合格" not in body.replace("前の版 v0-0-1: 合格", "") and "前の版 v0-0-1" in body,
+       "直下の cases.csv は未実行に戻り、前の版の結果は note に残る")
+    r = run(T / "check_cases.py", cases)
+    ok(r.returncode == 1 and "証拠のパスがない" not in r.stdout, "直下は「未実行」で止まり、消えた証拠のパスでは落ちない")
     ok(run(T / "cycle.py", "close", "v0-0-1").returncode == 1, "同じ名前で 2 回締めると止まる（負例）")
 
     print("cycle：移した会話を conv.py で引ける")
@@ -230,6 +256,8 @@ def t_cycle(tmp):
     r = run(T / "cycle.py", "close", "v0-0-2", "--merge", "--keep", "0101-02", "--apply")
     ok(r.returncode == 0 and (pre / "README_cycle.md").exists()
        and (pre / "README.md").read_text(encoding="utf-8") == "先に置いた計画の説明\n", "--merge で既存の README.md を残して足す")
+    ok(cases.read_text(encoding="utf-8").count("前の版 v0-0-1: 合格") == 3,
+       "評価をやり直さずに締め直しても、直下の cases.csv の前の版への参照は消えない")
 
     print("cycle：次の計画を始める")
     r = run(T / "cycle.py", "start", "v0-0-3")
@@ -264,6 +292,7 @@ def t_adopt(tmp):
     ok(claude.startswith(snap["CLAUDE.md"]) and "@CLAUDE.template.md" in claude, "既存の CLAUDE.md は残し、取り込みの 1 行だけ足す")
     gi = (tgt / ".gitignore").read_text(encoding="utf-8")
     ok(gi.startswith("node_modules/") and gi.count("node_modules/") == 1 and ".env" in gi, ".gitignore は足りない行だけ足す")
+    ok("build/" not in gi and "*.mp4" not in gi and "build/" in r.stdout, ".gitignore に汎用の行（build/ など）は足さず、表示だけする")
     for f in ("CLAUDE.template.md", "HISTORY.md", "_tools/setup.py", "_templates/_PLAYBOOK.md",
               ".claude/skills/milestone/SKILL.md", ".claude/agents/reviewer.md", ".claude/settings.template.json",
               "05_logs/README.md", "_examples/hearing/questions.json"):
@@ -272,6 +301,32 @@ def t_adopt(tmp):
     r2 = run(TOOLS / "adopt.py", "--target", tgt, "--apply", "--link")
     ok(r2.returncode == 0 and (tgt / "CLAUDE.md").read_text(encoding="utf-8").count("@CLAUDE.template.md") == 1,
        "2 回目は何も重ねない（取り込みの行は 1 つのまま）")
+
+    print("adopt：テンプレートと同じ名前の別物があると止まる（負例）")
+    for name, path, body in (("tools", "_tools/build.sh", "x\n"), ("history", "HISTORY.md", "# 自分の履歴\n")):
+        c = tmp / f"clash-{name}"
+        (c / path).parent.mkdir(parents=True, exist_ok=True)
+        (c / path).write_text(body, encoding="utf-8")
+        r = run(TOOLS / "adopt.py", "--target", c, "--apply")
+        files = [p.relative_to(c).as_posix() for p in c.rglob("*") if p.is_file()]
+        ok(r.returncode == 1 and files == [path], f"既存の {path} があると、何も置かずに止まる")
+
+    print("adopt：プロジェクトの SPEC.md などは、作り直す前に写して残す")
+    own = tmp / "own-spec"
+    own.mkdir()
+    for n in ("SPEC.md", "PROGRESS.md", "DECISIONS.md"):
+        (own / n).write_text(f"# my {n}\n", encoding="utf-8")
+    r = run(TOOLS / "adopt.py", "--target", own, "--apply")
+    ok(r.returncode == 0 and "pre-setup" in r.stdout, "adopt が、もとからある SPEC.md などの扱いを表示する")
+    af0 = tmp / "a0.json"
+    af0.write_text(json.dumps(base_answers("build", "adopt"), ensure_ascii=False), encoding="utf-8")
+    ok(run(own / "_tools" / "setup.py", "--answers", af0).returncode == 1, "--force なしの setup は止まる（負例）")
+    r = run(own / "_tools" / "setup.py", "--answers", af0, "--force")
+    bks = sorted((own / "05_logs").glob("pre-setup-*"))
+    ok(r.returncode == 0 and bool(bks) and all((bks[0] / n).exists() and (bks[0] / n).read_text(encoding="utf-8") == f"# my {n}\n"
+                                                for n in ("SPEC.md", "PROGRESS.md")),
+       "--force の setup は、上書きする前の SPEC.md・PROGRESS.md を 05_logs/pre-setup-*/ に写す")
+    ok((own / "DECISIONS.md").read_text(encoding="utf-8") == "# my DECISIONS.md\n", "DECISIONS.md は上書きしない")
 
     print("adopt：入れた後に setup（始め方＝後付け）が通る")
     af = tmp / "a.json"

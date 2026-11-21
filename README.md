@@ -17,8 +17,6 @@ Opus や Sonnet でも結果が安定するように、計画・記憶・検査�
 # 1. このテンプレートを新しいフォルダに写して、git を初期化する
 cp -r claude-project-template-ja my-project && cd my-project
 git init && git add -A && git commit -m "init from template"
-#    進行中の既存プロジェクトに入れるときは、代わりに次を実行する（既存のファイルは上書きしない）
-#    python3 claude-project-template-ja/_tools/adopt.py --target ../my-app --apply --link
 
 # 2. ヒアリングに答える（どちらか）
 python3 _tools/setup.py          # 端末で答える
@@ -29,6 +27,17 @@ python3 _tools/doctor.py
 
 # 4. Claude Code を開き、KICKOFF.md の枠の中を最初のメッセージとして渡す
 ```
+
+進行中の既存プロジェクトに入れるときは、手順 1 の代わりに、テンプレートの親フォルダで次を実行する
+（既存のファイルは上書きしない。詳しくは [docs/usecases.md](docs/usecases.md) の「後付けの始め方」）。
+
+```bash
+python3 claude-project-template-ja/_tools/adopt.py --target my-app            # 試し
+python3 claude-project-template-ja/_tools/adopt.py --target my-app --apply --link
+```
+
+ヒアリングの答えは `_examples/answers/current.json` に残る（やり直しや `--answers` での再実行に使う）。
+個人情報や秘密を答えに書いたときは、コミットの前に消すか `.gitignore` に入れる。
 
 テンプレートの直下には、仕様や記憶のファイルはまだない。ひな形は `_templates/` にあり、
 ヒアリングの後で、選んだ型に必要なものだけが直下に作られる。

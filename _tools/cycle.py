@@ -8,6 +8,8 @@
                   写す（直下に残す）: 仕様のファイル、PROGRESS.md、DECISIONS.md、04_evals/cases.csv
                   移す（直下から消える）: PLAN.md、HANDOFF.md、MANUAL-CHECK.md、02_conversations/ の記録、
                                           04_evals/ の実行記録（cases.csv と README.md を除く）
+                  04_evals/cases.csv は、写しの証拠のパスを移した先に直し、直下のほうは result を「未実行」、
+                  evidence を空に戻す（前の版の結果は note に残す）。次の版で評価をやり直すため
                   --keep <番号> で、続けて書き足す会話の記録を残す（例 --keep 1121-02）
                   --merge で、すでにある 05_logs/<名前>/（版の途中で計画を置いていた場合など）に足す。
                   同じ名前のファイルがあれば止める
@@ -20,6 +22,7 @@
   python3 _tools/cycle.py start v0-0-2
 """
 import argparse
+import csv
 import datetime
 import re
 import shutil
@@ -75,6 +78,37 @@ def plan_close(cycle, keep):
     return dest, acts
 
 
+def roll_cases(root_csv, snap_csv, cycle):
+    """締めた後の評価ケース：写しは証拠のパスを移した先に直し、直下は次の版のために未実行に戻す。"""
+    with root_csv.open(encoding="utf-8", newline="") as f:
+        rd = csv.DictReader(f)
+        cols, rows = rd.fieldnames or [], list(rd)
+    if not {"result", "evidence"} <= set(cols):
+        return 0
+    moved = f"05_logs/{cycle}/evals/"
+    fix = lambda ev: ";".join(moved + s.strip()[len("04_evals/"):] if s.strip().startswith("04_evals/") else s.strip()
+                              for s in ev.replace("；", ";").split(";")) if ev else ev
+    snap = [{**r, "evidence": fix(r.get("evidence") or "")} for r in rows]
+    if "note" not in cols:
+        cols = [*cols, "note"]
+    nxt = []
+    for r in rows:
+        old = (r.get("note") or "").strip()
+        if (r.get("result") or "").strip() == "未実行" and old.startswith("前の版"):
+            nxt.append(r)  # この版で評価していない。前の版への参照をそのまま残す
+            continue
+        prev = f"前の版 {cycle}: {r.get('result') or '未記入'}"
+        if (r.get("evidence") or "").strip():
+            prev += f"（証拠は 05_logs/{cycle}/evals/ の写しを参照）"
+        nxt.append({**r, "result": "未実行", "evidence": "", "note": prev + (f" ｜ {old}" if old else "")})
+    for path, data in ((snap_csv, snap), (root_csv, nxt)):
+        with path.open("w", encoding="utf-8", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=cols, extrasaction="ignore")
+            w.writeheader()
+            w.writerows(data)
+    return len(rows)
+
+
 def readme(cycle, acts, keep):
     rel = lambda p: p.relative_to(ROOT).as_posix()
     rows = "\n".join(f"| `{rel(d)}` | {a} | `{rel(s)}` |" for a, s, d in acts)
@@ -110,6 +144,8 @@ def cmd_close(a):
     print(f"サイクル {a.name} を締めます（{'実行' if a.apply else '試し。何も変えていません'}）")
     for act, s, d in acts:
         print(f"  {act}  {s.relative_to(ROOT)}  →  {d.relative_to(ROOT)}")
+    if any(s.name == "cases.csv" for _, s, _ in acts):
+        print("  戻す  04_evals/cases.csv（result を「未実行」、evidence を空に。前の版の結果は note に残す）")
     if not a.apply:
         print("\n実行するには --apply を付けてください。移すファイルは直下から消えます（git には残ります）。")
         return
@@ -120,6 +156,10 @@ def cmd_close(a):
             shutil.copy2(s, d)
         else:
             shutil.move(str(s), str(d))
+    cases = ROOT / "04_evals" / "cases.csv"
+    n = roll_cases(cases, dest / "evals" / "cases.csv", a.name) if cases.is_file() and (dest / "evals" / "cases.csv").is_file() else 0
+    if n:
+        print(f"04_evals/cases.csv の {n} 件を「未実行」に戻しました（前の版の結果は note と 05_logs/{a.name}/evals/ にあります）")
     rd = dest / ("README_cycle.md" if (dest / "README.md").exists() else "README.md")
     rd.write_text(readme(a.name, acts, a.keep or []), encoding="utf-8")
     print(f"\n締めました: 05_logs/{a.name}/（{rd.name} に一覧）")

@@ -5,6 +5,7 @@
   python3 _tools/doctor.py
 """
 import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -65,6 +66,15 @@ def main():
     print("環境")
     report(sys.version_info >= (3, 9), f"Python {sys.version.split()[0]}（3.9 以上）")
     report((ROOT / ".git").exists(), "git の初期化", "git init && git add -A && git commit -m 'init'")
+    for cmd in ("git", "uv", "node"):
+        path = shutil.which(cmd)
+        ver = ""
+        if path:
+            try:
+                ver = subprocess.run([cmd, "--version"], capture_output=True, text=True, timeout=10).stdout.strip().splitlines()[0]
+            except (OSError, subprocess.SubprocessError, IndexError):
+                ver = "版を読めない"
+        print(f"  --  {cmd}: {ver or path or 'なし'}" + ("" if path else "（使う予定があれば入れる。仕様のファイルの「実行環境の版」に書く）"))
     convs = [p for p in (ROOT / "02_conversations").glob("*.md") if p.name != "README.md"]
     print(f"  --  会話の記録: {len(convs)} 件")
 

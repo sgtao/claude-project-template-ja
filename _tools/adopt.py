@@ -9,7 +9,9 @@
   CLAUDE.md     : なければ置く。あれば CLAUDE.template.md として置き、--link のときだけ、既存の CLAUDE.md の末尾に
                   取り込みの 1 行（@CLAUDE.template.md）を足す
   settings.json : なければ置く。あれば .claude/settings.template.json として置き、足りない権限を表示する（書き換えない）
-  .gitignore    : 足りない行だけを末尾に足す
+  .gitignore    : 仕組みが要る行（秘密の情報、個人設定、Python のキャッシュ、一時フォルダ）のうち、足りないものだけを
+                  末尾に足す。build/ などの汎用の行は、表示だけする
+  名前の衝突    : _tools/ などが、テンプレートのものでない中身で既にあるときは、何も変えずに止める
   README.md     : 触らない
   --update      : 古い版のテンプレートで始めたプロジェクトを新しくする。テンプレートが持つもの（_tools/、_templates/、
                   _examples/hearing/ の中のファイル）は同じ名前のファイルを上書きし、足りないスキル・エージェント・
@@ -32,6 +34,12 @@ ROOT = Path(__file__).resolve().parent.parent
 TREES = ["_tools", "_templates", "_examples/hearing"]
 FILES = ["HISTORY.md", "02_conversations/README.md", "04_evals/README.md", "05_logs/README.md"]
 MARK = "# --- claude-project-template-ja ---"
+# 既存のフォルダ・ファイルがテンプレートのものかを見分ける目印（ないときは名前がぶつかっているとみなして止める）
+OWN = {"_tools": "_tools/setup.py", "_templates": "_templates/_SPEC.md",
+       "_examples/hearing": "_examples/hearing/questions.json", "HISTORY.md": None}
+# .gitignore に足すのは、仕組みが要る行だけ。ほかの行（build/ など）は、既存の使い方とぶつかりうるので表示だけする
+GI_NEED = [".env", ".env.*", "!.env.example", "secrets/", ".claude/settings.local.json", "CLAUDE.local.md",
+           "__pycache__/", "*.py[cod]", ".playwright-mcp/", "_to_delete/"]
 SKIP = {"__pycache__", ".DS_Store"}
 
 
@@ -51,6 +59,20 @@ def tree_updates(src_dir, dst_dir):
     return out
 
 
+def clashes(target):
+    """テンプレートと同じ名前で、中身が別物のフォルダ・ファイル。"""
+    out = []
+    for name, mark in OWN.items():
+        dst = target / name
+        if not dst.exists():
+            continue
+        if mark and not (target / mark).exists():
+            out.append(f"{name}/（テンプレートの {mark} がない）")
+        if mark is None and "conv.py" not in dst.read_text(encoding="utf-8", errors="ignore"):
+            out.append(f"{name}（テンプレートの HISTORY.md ではない。CLAUDE.template.md の @HISTORY.md がこれを読み込んでしまう）")
+    return out
+
+
 def plan(target, link, update=False):
     acts, notes = [], []  # acts: (種類, 元, 先, 説明)
     for t in TREES:
@@ -62,6 +84,8 @@ def plan(target, link, update=False):
         acts.append(("既存のまま" if dst.exists() else "置く", ROOT / t, dst, "フォルダ"))
     for f in FILES:
         dst = target / f
+        if dst.exists() and update and not filecmp.cmp(ROOT / f, dst, shallow=False):
+            notes.append(f"{f} は新しい版と中身が違う（上書きしない。diff {ROOT / f} {dst} で見比べて、手で取り込む）")
         acts.append(("既存のまま" if dst.exists() else "置く", ROOT / f, dst, ""))
     for kind in ("skills", "agents"):
         for src in sorted((ROOT / ".claude" / kind).iterdir()):
@@ -72,6 +96,11 @@ def plan(target, link, update=False):
                 notes.append(f".claude/{kind}/{src.name} は新しい版と中身が違う（プロジェクトで直した可能性があるため上書きしない。"
                              f"テンプレートの同じ場所と diff -r で見比べて、手で取り込む）")
             acts.append(("既存のまま" if dst.exists() else "置く", src, dst, f"{kind} の同名あり" if dst.exists() else ""))
+    own = [n for n in ("SPEC.md", "BRIEF.md", "PLAYBOOK.md", "KICKOFF.md", "PROGRESS.md", "DECISIONS.md") if (target / n).exists()]
+    if own and not update:
+        notes.append(f"プロジェクトの {', '.join(own)} がある。setup.py はここで止まる。--force を付けると、"
+                     "上書きする前に 05_logs/pre-setup-<日付>/ に写してから作り直す。写した中身は、新しい仕様の"
+                     "「今の状態（後付け）」に移す")
     claude = target / "CLAUDE.md"
     if not claude.exists():
         acts.append(("置く", ROOT / "CLAUDE.md", claude, ""))
@@ -106,9 +135,14 @@ def plan(target, link, update=False):
     gi = target / ".gitignore"
     have = set(gi.read_text(encoding="utf-8").splitlines()) if gi.exists() else set()
     src = (ROOT / ".gitignore").read_text(encoding="utf-8").split("# local settings")[0]  # 以降はテンプレートの手元だけの行
-    want = [l for l in src.splitlines() if l.strip() and not l.startswith("#") and l not in have]
+    lines = [l for l in src.splitlines() if l.strip() and not l.startswith("#") and l not in have]
+    want = [l for l in lines if l in GI_NEED]
+    rest = [l for l in lines if l not in GI_NEED]
     if want:
-        acts.append(("末尾に足す", None, gi, f"{len(want)} 行（{', '.join(want[:4])}{' …' if len(want) > 4 else ''}）"))
+        acts.append(("末尾に足す", None, gi, f"{len(want)} 行（{', '.join(want)}）"))
+    if rest:
+        notes.append(".gitignore に、テンプレートの汎用の行のうち次は足していない（既存の使い方とぶつかりうるため。"
+                     f"要るものだけ手で足す）: {', '.join(rest)}")
     return acts, notes, want
 
 
@@ -127,6 +161,10 @@ def main():
     if (target / "_tools" / "setup.py").exists() and (target / "_templates").exists() and not a.update:
         print("注意: すでにテンプレートの仕組みが入っているようです。既存のものは上書きしません。"
               "新しい版にするなら --update を付けてください。")
+    bad = clashes(target)
+    if bad:
+        sys.exit("テンプレートと同じ名前で、別のものがあります。名前を変えるか移してから、やり直してください（何も変えていません）:\n  "
+                 + "\n  ".join(bad))
     acts, notes, gi_lines = plan(target, a.link, a.update)
     print(f"{target} に入れます（{'実行' if a.apply else '試し。何も変えていません'}）")
     for kind, _, dst, note in acts:

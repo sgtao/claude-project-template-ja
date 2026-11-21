@@ -25,6 +25,7 @@ import argparse
 import datetime
 import json
 import re
+import shutil
 import sys
 from pathlib import Path
 
@@ -162,13 +163,15 @@ def main():
     ap.add_argument("--answers", help="答えの JSON ファイル")
     ap.add_argument("--out", default=str(ROOT), help="出力先（既定はリポジトリのトップ）")
     ap.add_argument("--force", action="store_true",
-                    help="作成済みの SPEC.md／BRIEF.md／PLAYBOOK.md、KICKOFF.md、PROGRESS.md を上書きする（台帳は上書きしない）")
+                    help="作成済みの SPEC.md／BRIEF.md／PLAYBOOK.md、KICKOFF.md、PROGRESS.md などを作り直す。"
+                         "上書きする前に 05_logs/pre-setup-<日付>/ に写す（台帳は上書きしない）")
     a = ap.parse_args()
 
     questions = load_questions()
     done = [n for n in (*SPEC_DOCS, "KICKOFF.md", "PROGRESS.md") if (Path(a.out) / n).exists()]
     if done and not a.force:  # 答える前に止める（答えた後で無駄にしない）
-        sys.exit(f"セットアップ済みです（{', '.join(done)} があります）。やり直すなら --force を付けてください。")
+        sys.exit(f"セットアップ済みです（{', '.join(done)} があります）。やり直すなら --force を付けてください"
+                 "（上書きする前に、今のファイルを 05_logs/pre-setup-<日付>/ に写します）。")
     if a.answers:
         ans = json.loads(Path(a.answers).read_text(encoding="utf-8"))
     else:
@@ -213,6 +216,17 @@ def main():
         sys.exit(f"{', '.join(blocked)} はすでにあります。上書きするなら --force を付けてください。")
 
     out.mkdir(parents=True, exist_ok=True)
+    over = [name for _, name in files if name not in kept and (out / name).exists()]
+    if over:  # --force でも、上書きする前のファイルは消さずに写しておく
+        bk = out / "05_logs" / f"pre-setup-{ans['DATE']}"
+        n = 2
+        while bk.exists():
+            bk = out / "05_logs" / f"pre-setup-{ans['DATE']}-{n}"
+            n += 1
+        for name in over:
+            (bk / name).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(out / name, bk / name)
+        print(f"上書きする前のファイルを写しました: {bk.relative_to(out).as_posix()}/（{', '.join(over)}）")
     for src, name in files:
         if name in kept:
             continue

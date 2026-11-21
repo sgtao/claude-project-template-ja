@@ -52,6 +52,9 @@ cd ../my-app && python3 _tools/doctor.py
 ```
 
 その後、`../my-app` で Claude Code を開き、`/setup-project` で始め方に「後付け」を選ぶ。
+`../my-app` に、もとから `SPEC.md`・`PROGRESS.md`・`DECISIONS.md` などがあると、セットアップは止まる。
+`--force` で作り直すと、上書きする前のファイルを `05_logs/pre-setup-<日付>/` に写すので、その中身を新しい仕様の
+「今の状態（後付け）」に移す。
 
 古い版のこのテンプレートで始めたプロジェクトを新しくするときは `--update` を付ける。`_tools/`・`_templates/`・
 `_examples/hearing/` の中の同じ名前のファイルを新しくし、足りないスキルやフォルダを足す（ファイルは消さない）。
