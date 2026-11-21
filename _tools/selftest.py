@@ -115,6 +115,62 @@ def t_setup(tmp):
             ok("## 始め方" in spec, f"{tag} の {doc} に「## 始め方」がある")
 
 
+def t_checks(tmp):
+    sample = ROOT / "_examples" / "craft-sample"
+    print("checks：正例で合格する")
+    ok(run(TOOLS / "check_cases.py", sample / "cases.csv").returncode == 0, "見本の cases.csv")
+    ok(run(TOOLS / "check_skill.py", sample / "invoice-check").returncode == 0, "見本のスキル invoice-check")
+    skills = sorted((ROOT / ".claude" / "skills").iterdir())
+    r = run(TOOLS / "check_skill.py", *skills)
+    ok(r.returncode == 0, f"テンプレートのスキル {len(skills)} 個" + ("" if r.returncode == 0 else f"（{r.stdout.strip()[-160:]}）"))
+    good_spec = "## 合格条件\n1. 30fps を保つ（確認：計測スクリプト）\n2. 起動まで 3 秒以内\n"
+    (tmp / "SPEC.md").write_text(good_spec, encoding="utf-8")
+    ok(run(TOOLS / "check_spec.py", tmp / "SPEC.md").returncode == 0, "check_spec：記入済みの仕様")
+
+    print("checks：負例で不合格になる")
+    head = "id,kind,input,expected,result,evidence,note\n"
+    neg_cases = {
+        "負例がない": "C-1,正例,a,b,合格,,\n",
+        "未実行がある": "C-1,正例,a,b,未実行,,\nC-2,負例,a,b,合格,,\n",
+        "不合格がある": "C-1,正例,a,b,不合格,,\nC-2,負例,a,b,合格,,\n",
+        "kind の誤り": "C-1,ふつう,a,b,合格,,\nC-2,負例,a,b,合格,,\n",
+        "id の重複": "C-1,正例,a,b,合格,,\nC-1,負例,a,b,合格,,\n",
+        "証拠のパスがない": "C-1,正例,a,b,合格,evals/none.md,\nC-2,負例,a,b,合格,,\n",
+        "0 件": "",
+    }
+    for name, body in neg_cases.items():
+        p = tmp / f"cases-{len(name)}-{abs(hash(name)) % 997}.csv"
+        p.write_text(head + body, encoding="utf-8")
+        ok(run(TOOLS / "check_cases.py", p).returncode == 1, f"check_cases：{name}")
+    p = tmp / "cases-pending.csv"
+    p.write_text(head + "C-1,正例,a,b,未実行,,\nC-2,負例,a,b,合格,,\n", encoding="utf-8")
+    ok(run(TOOLS / "check_cases.py", p, "--allow-pending").returncode == 0, "check_cases：--allow-pending では未実行を警告にとどめる（正例）")
+
+    neg_skills = {
+        "frontmatter がない": "# 見出しだけ\n",
+        "description がない": "---\nname: s1\n---\n本文\n",
+        "name が不正": "---\nname: My_Skill\ndescription: 「試して」と言われたときに使う、試しのスキルの説明文です。\n---\n",
+        "参照が切れている": "---\nname: s1\ndescription: 「試して」と言われたときに使う、試しのスキルの説明文です。\n---\n[基準](references/none.md)\n",
+        "未記入が残る": "---\nname: s1\ndescription: 「試して」と言われたときに使う、試しのスキルの説明文です。\n---\n[要記入: 手順]\n",
+    }
+    for i, (name, body) in enumerate(neg_skills.items()):
+        d = tmp / f"skill{i}" / "s1"
+        d.mkdir(parents=True)
+        (d / "SKILL.md").write_text(body, encoding="utf-8")
+        ok(run(TOOLS / "check_skill.py", d).returncode == 1, f"check_skill：{name}")
+    d = tmp / "skill-empty" / "s1"
+    d.mkdir(parents=True)
+    ok(run(TOOLS / "check_skill.py", d).returncode == 1, "check_skill：SKILL.md がない")
+
+    for name, body in {"未記入が残る": "## 合格条件\n1. [要記入: 合格条件]\n",
+                       "数値も確かめ方もない": "## 合格条件\n1. 動きが滑らかである\n",
+                       "11 個ある": "## 合格条件\n" + "".join(f"{i}. {i} 秒以内\n" for i in range(1, 12))}.items():
+        p = tmp / "neg" / f"{abs(hash(name)) % 997}" / "SPEC.md"
+        p.parent.mkdir(parents=True)
+        p.write_text(body, encoding="utf-8")
+        ok(run(TOOLS / "check_spec.py", p).returncode == 1, f"check_spec：{name}")
+
+
 def main():
     names = sys.argv[1:] or ["setup", "checks", "cycle", "adopt"]
     tests = {n[2:]: f for n, f in globals().items() if n.startswith("t_")}

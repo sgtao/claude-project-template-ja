@@ -13,7 +13,8 @@ ROOT = Path(__file__).resolve().parent.parent
 # テンプレートに最初から入っているファイル
 REQUIRED = ["README.md", "CLAUDE.md", "HISTORY.md", ".gitignore", ".claude/settings.json",
             "02_conversations/README.md", "_examples/hearing/questions.json",
-            "_tools/conv.py", "_tools/setup.py", "_tools/check_spec.py",
+            "_tools/conv.py", "_tools/setup.py", "_tools/check_spec.py", "_tools/check_cases.py",
+            "_tools/check_skill.py", "_tools/selftest.py",
             "_templates/_SPEC.md", "_templates/_BRIEF.md", "_templates/_PROGRESS.md",
             "_templates/_DECISIONS.md", "_templates/_LEDGER.csv",
             "_templates/_KICKOFF.build.md", "_templates/_KICKOFF.knowledge.md",
