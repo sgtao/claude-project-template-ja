@@ -190,7 +190,11 @@ def main():
         elif kind == "末尾に足す" and dst.name == ".gitignore":
             text = dst.read_text(encoding="utf-8").rstrip("\n") + "\n\n" if dst.exists() else ""
             dst.write_text(text + MARK + "\n" + "\n".join(gi_lines) + "\n", encoding="utf-8")
-    print("\n入れました。次の一手: 対象のフォルダで Claude Code を開き、/setup-project で始め方に「後付け」を選ぶ")
+    if a.update:
+        print("\n新しくしました。次の一手: 対象のフォルダで python3 _tools/doctor.py を実行し、「注意」に出たスキル・CLAUDE.md・"
+              "HISTORY.md を、テンプレートと見比べて手で取り込む（セットアップのやり直しは要らない）")
+    else:
+        print("\n入れました。次の一手: 対象のフォルダで Claude Code を開き、/setup-project で始め方に「後付け」を選ぶ")
 
 
 if __name__ == "__main__":

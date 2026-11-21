@@ -346,7 +346,8 @@ def t_adopt(tmp):
     (old / ".claude" / "skills" / "verify").mkdir(parents=True)
     (old / ".claude" / "skills" / "verify" / "SKILL.md").write_text("---\nname: verify\ndescription: 直した版\n---\n", encoding="utf-8")
     r = run(TOOLS / "adopt.py", "--target", old, "--update", "--link", "--apply")
-    ok(r.returncode == 0, "adopt.py --update --apply が通る")
+    ok(r.returncode == 0 and "新しくしました" in r.stdout and "後付け" not in r.stdout.splitlines()[-1],
+       "adopt.py --update --apply が通り、セットアップのやり直しを案内しない")
     ok((old / "_tools" / "setup.py").read_text(encoding="utf-8") == (TOOLS / "setup.py").read_text(encoding="utf-8")
        and (old / "_tools" / "check_cases.py").exists(), "テンプレートが持つファイルは新しくなり、足りないものは足される")
     ok((old / "_tools" / "my_check.py").exists(), "プロジェクトで足したファイルは消さない")
