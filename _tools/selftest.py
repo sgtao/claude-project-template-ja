@@ -7,7 +7,7 @@
   setup   : 見本の答えと、対象 3 × 始め方 4 の 12 通りで setup.py が通り、未展開の記法が残らない。
             始め方ごとの節が、その始め方のときだけ出る。既存の見本の見出しが改修前から消えていない
   checks  : check_cases.py・check_skill.py・check_spec.py が、正例で合格、負例で不合格になる
-  cycle   : cycle.py が会話と評価を 05_logs/ に移し、移した会話を conv.py で引ける
+  cycle   : cycle.py が会話と評価を 04_logs/ に移し、移した会話を conv.py で引ける
   adopt   : adopt.py が既存の CLAUDE.md・README.md・settings.json を上書きせず、仕組みを置く
 
 使い方:
@@ -111,7 +111,7 @@ def t_setup(tmp):
             files = {p.relative_to(out).as_posix() for p in out.rglob("*") if p.is_file()}
             need = {doc, "KICKOFF.md", "PROGRESS.md", "DECISIONS.md"}
             need |= {"LEDGER.csv"} if kind == "knowledge" else set()
-            need |= {"04_evals/cases.csv"} if kind == "craft" else set()
+            need |= {"05_evals/cases.csv"} if kind == "craft" else set()
             others = set(KINDS.values()) - {doc}
             ok(need <= files and not (others & files), f"{tag} のファイル: {sorted(need - files) or 'すべてある'}")
             text = "\n".join((out / f).read_text(encoding="utf-8") for f in files if f.endswith(".md"))
@@ -189,7 +189,7 @@ def copy_template(dest):
     """テンプレートの仕組みだけを一時フォルダに写す（試しのプロジェクト）。"""
     for d in ("_tools", "_templates", "_examples/hearing"):
         shutil.copytree(ROOT / d, dest / d)
-    for d in ("02_conversations", "04_evals", "05_logs"):
+    for d in ("02_conversations", "05_evals", "04_logs"):
         (dest / d).mkdir(parents=True, exist_ok=True)
         shutil.copy2(ROOT / d / "README.md", dest / d / "README.md")
     return dest
@@ -205,13 +205,13 @@ def t_cycle(tmp):
     run(T / "conv.py", "add", "--q-title", "質問 1", "--q", "目印の質問 ZQX", "--a", "回答")
     r2 = run(T / "conv.py", "new", "keep-talk", "--date", "0101")
     ok(r1.returncode == 0 and r2.returncode == 0, "cycle：会話の記録を 2 件作る")
-    (proj / "04_evals" / "0101-01_run").mkdir()
-    (proj / "04_evals" / "0101-01_run" / "README.md").write_text("実行の記録\n", encoding="utf-8")
+    (proj / "05_evals" / "0101-01_run").mkdir()
+    (proj / "05_evals" / "0101-01_run" / "README.md").write_text("実行の記録\n", encoding="utf-8")
     (proj / "PLAN.md").write_text("# 計画\n", encoding="utf-8")
-    cases = proj / "04_evals" / "cases.csv"
+    cases = proj / "05_evals" / "cases.csv"
     cases.write_text("id,kind,input,expected,result,evidence,note\n"
                      "C-01,正例,a,b,合格,0101-01_run/README.md,\n"
-                     "C-02,境界,a,b,合格,04_evals/0101-01_run/README.md,\n"
+                     "C-02,境界,a,b,合格,05_evals/0101-01_run/README.md,\n"
                      "C-03,負例,a,止まる,合格,0101-01_run/README.md,\n", encoding="utf-8")
     ok(run(T / "check_cases.py", cases).returncode == 0, "cycle：締める前の cases.csv が合格")
 
@@ -223,15 +223,15 @@ def t_cycle(tmp):
 
     print("cycle：--apply で締める")
     r = run(T / "cycle.py", "close", "v0-0-1", "--keep", "0101-02", "--apply")
-    log = proj / "05_logs" / "v0-0-1"
+    log = proj / "04_logs" / "v0-0-1"
     ok(r.returncode == 0, "close --apply が通る" + (f"（{r.stderr.strip()[:120]}）" if r.returncode else ""))
     ok((log / "PLAYBOOK.v0-0-1.md").exists() and (proj / "PLAYBOOK.md").exists(), "仕様のファイルは写し（直下に残る）")
     ok((log / "PLAN.md").exists() and not (proj / "PLAN.md").exists(), "PLAN.md は移る")
     ok((log / "conversations" / "0101-01_first-talk.md").exists(), "会話の記録が移る")
     ok((proj / "02_conversations" / "0101-02_keep-talk.md").exists(), "--keep の会話は直下に残る")
-    ok((log / "evals" / "0101-01_run" / "README.md").exists() and (proj / "04_evals" / "cases.csv").exists(),
+    ok((log / "evals" / "0101-01_run" / "README.md").exists() and (proj / "05_evals" / "cases.csv").exists(),
        "実行記録は移り、cases.csv は残る")
-    ok((log / "README.md").exists(), "05_logs/v0-0-1/README.md ができる")
+    ok((log / "README.md").exists(), "04_logs/v0-0-1/README.md ができる")
     ok(run(T / "check_cases.py", log / "evals" / "cases.csv").returncode == 0, "写しの cases.csv は、移した証拠を指して合格のまま")
     body = cases.read_text(encoding="utf-8")
     ok(body.count("未実行") == 3 and "合格" not in body.replace("前の版 v0-0-1: 合格", "") and "前の版 v0-0-1" in body,
@@ -249,7 +249,7 @@ def t_cycle(tmp):
     ok(r.stdout.strip().endswith("0101-03_third.md"), f"移した記録と番号が重ならない（{r.stdout.strip()}）")
 
     print("cycle：版の途中で作ったフォルダに --merge で足す")
-    pre = proj / "05_logs" / "v0-0-2"
+    pre = proj / "04_logs" / "v0-0-2"
     pre.mkdir()
     (pre / "README.md").write_text("先に置いた計画の説明\n", encoding="utf-8")
     ok(run(T / "cycle.py", "close", "v0-0-2").returncode == 1, "既存のフォルダには --merge なしでは足さない（負例）")
@@ -263,7 +263,7 @@ def t_cycle(tmp):
     r = run(T / "cycle.py", "start", "v0-0-3")
     plan = proj / "PLAN.md"
     ok(r.returncode == 0 and plan.exists() and "{{" not in plan.read_text(encoding="utf-8")
-       and "05_logs/v0-0-2/" in plan.read_text(encoding="utf-8"), "start で PLAN.md ができ、最後に締めた記録を指す")
+       and "04_logs/v0-0-2/" in plan.read_text(encoding="utf-8"), "start で PLAN.md ができ、最後に締めた記録を指す")
     ok(run(T / "cycle.py", "start", "v0-0-4").returncode == 1, "PLAN.md があると start は止まる（負例）")
 
 
@@ -295,7 +295,7 @@ def t_adopt(tmp):
     ok("build/" not in gi and "*.mp4" not in gi and "build/" in r.stdout, ".gitignore に汎用の行（build/ など）は足さず、表示だけする")
     for f in ("CLAUDE.template.md", "HISTORY.md", "_tools/setup.py", "_templates/_PLAYBOOK.md",
               ".claude/skills/milestone/SKILL.md", ".claude/agents/reviewer.md", ".claude/settings.template.json",
-              "05_logs/README.md", "_examples/hearing/questions.json"):
+              "04_logs/README.md", "_examples/hearing/questions.json"):
         ok((tgt / f).exists(), f"{f} を置く")
     ok("足りないもの" in r.stdout, "既存の settings.json に足りない権限を表示する")
     r2 = run(TOOLS / "adopt.py", "--target", tgt, "--apply", "--link")
@@ -322,10 +322,10 @@ def t_adopt(tmp):
     af0.write_text(json.dumps(base_answers("build", "adopt"), ensure_ascii=False), encoding="utf-8")
     ok(run(own / "_tools" / "setup.py", "--answers", af0).returncode == 1, "--force なしの setup は止まる（負例）")
     r = run(own / "_tools" / "setup.py", "--answers", af0, "--force")
-    bks = sorted((own / "05_logs").glob("pre-setup-*"))
+    bks = sorted((own / "04_logs").glob("pre-setup-*"))
     ok(r.returncode == 0 and bool(bks) and all((bks[0] / n).exists() and (bks[0] / n).read_text(encoding="utf-8") == f"# my {n}\n"
                                                 for n in ("SPEC.md", "PROGRESS.md")),
-       "--force の setup は、上書きする前の SPEC.md・PROGRESS.md を 05_logs/pre-setup-*/ に写す")
+       "--force の setup は、上書きする前の SPEC.md・PROGRESS.md を 04_logs/pre-setup-*/ に写す")
     ok((own / "DECISIONS.md").read_text(encoding="utf-8") == "# my DECISIONS.md\n", "DECISIONS.md は上書きしない")
 
     print("adopt：入れた後に setup（始め方＝後付け）が通る")
@@ -345,6 +345,15 @@ def t_adopt(tmp):
     (old / "CLAUDE.md").write_text("# 古い版のルール\n", encoding="utf-8")
     (old / ".claude" / "skills" / "verify").mkdir(parents=True)
     (old / ".claude" / "skills" / "verify" / "SKILL.md").write_text("---\nname: verify\ndescription: 直した版\n---\n", encoding="utf-8")
+    shutil.rmtree(old / "05_evals")  # 旧い版の形：番号が違う名前のフォルダだけがある
+    shutil.rmtree(old / "04_logs")
+    (old / "04_evals").mkdir()
+    (old / "05_logs").mkdir()
+    r0 = run(TOOLS / "adopt.py", "--target", old, "--update")
+    ok("git mv 04_evals 05_evals" in r0.stdout and "git mv 05_logs 04_logs" in r0.stdout, "旧い版のフォルダ名（04_evals・05_logs）があると、引き継ぎ方を案内する")
+    (old / "04_evals").rmdir()
+    (old / "05_logs").rmdir()
+    ok(not (old / "05_evals").exists(), "試しでは、新しい名前のフォルダを作らない")
     r = run(TOOLS / "adopt.py", "--target", old, "--update", "--link", "--apply")
     ok(r.returncode == 0 and "新しくしました" in r.stdout and "後付け" not in r.stdout.splitlines()[-1],
        "adopt.py --update --apply が通り、セットアップのやり直しを案内しない")

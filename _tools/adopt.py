@@ -4,7 +4,7 @@
 始め方の「後付け」（adopt）で使う。既存のファイルは上書きしない。既定は試し（予定だけ出す）で、--apply で実行する。
 
   置くもの      : _tools/、_templates/、_examples/hearing/、HISTORY.md、.claude/skills/*、.claude/agents/*、
-                  02_conversations/・04_evals/・05_logs/ の README.md
+                  02_conversations/・05_evals/・04_logs/ の README.md
   既存があれば  : そのファイル・フォルダは置かない（「既存のまま」と表示する）
   CLAUDE.md     : なければ置く。あれば CLAUDE.template.md として置き、--link のときだけ、既存の CLAUDE.md の末尾に
                   取り込みの 1 行（@CLAUDE.template.md）を足す
@@ -32,7 +32,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 TREES = ["_tools", "_templates", "_examples/hearing"]
-FILES = ["HISTORY.md", "02_conversations/README.md", "04_evals/README.md", "05_logs/README.md"]
+FILES = ["HISTORY.md", "02_conversations/README.md", "05_evals/README.md", "04_logs/README.md"]
 MARK = "# --- claude-project-template-ja ---"
 # 既存のフォルダ・ファイルがテンプレートのものかを見分ける目印（ないときは名前がぶつかっているとみなして止める）
 OWN = {"_tools": "_tools/setup.py", "_templates": "_templates/_SPEC.md",
@@ -96,10 +96,14 @@ def plan(target, link, update=False):
                 notes.append(f".claude/{kind}/{src.name} は新しい版と中身が違う（プロジェクトで直した可能性があるため上書きしない。"
                              f"テンプレートの同じ場所と diff -r で見比べて、手で取り込む）")
             acts.append(("既存のまま" if dst.exists() else "置く", src, dst, f"{kind} の同名あり" if dst.exists() else ""))
+    for old, new in (("04_evals", "05_evals"), ("05_logs", "04_logs")):  # 旧い版のテンプレートのフォルダ名
+        if (target / old).is_dir() and not (target / new).exists():
+            notes.append(f"{old}/ は旧い版のフォルダ名。この版では {new}/。中身を引き継ぐなら、先に git mv {old} {new} を実行してから"
+                         f"やり直す（先にやらないと、空の {new}/ ができて {old}/ と二重になる）")
     own = [n for n in ("SPEC.md", "BRIEF.md", "PLAYBOOK.md", "KICKOFF.md", "PROGRESS.md", "DECISIONS.md") if (target / n).exists()]
     if own and not update:
         notes.append(f"プロジェクトの {', '.join(own)} がある。setup.py はここで止まる。--force を付けると、"
-                     "上書きする前に 05_logs/pre-setup-<日付>/ に写してから作り直す。写した中身は、新しい仕様の"
+                     "上書きする前に 04_logs/pre-setup-<日付>/ に写してから作り直す。写した中身は、新しい仕様の"
                      "「今の状態（後付け）」に移す")
     claude = target / "CLAUDE.md"
     if not claude.exists():

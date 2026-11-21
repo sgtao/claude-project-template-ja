@@ -70,7 +70,7 @@
 ## 専門作業（PLAYBOOK.md を使う仕事）
 - 手順と判断の基準は、過去の実例（`01_sources/`）から書き出す。実例で裏付けられない基準は、ユーザーに確かめる
 - 自動化の水準は、迷ったら低いほう（手作業・チェックリスト）にし、評価ケースが通ってから上げる
-- 評価ケースは `04_evals/cases.csv` に正例・境界・負例を置き、`python3 _tools/check_cases.py` を通す
+- 評価ケースは `05_evals/cases.csv` に正例・境界・負例を置き、`python3 _tools/check_cases.py` を通す
 - スキルを作ったら `python3 _tools/check_skill.py <フォルダ>` を通す
 
 ## 検査と審査

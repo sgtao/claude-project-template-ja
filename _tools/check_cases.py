@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""評価ケース表（04_evals/cases.csv）の検査。標準ライブラリのみで動く。
+"""評価ケース表（05_evals/cases.csv）の検査。標準ライブラリのみで動く。
 
 専門作業（PLAYBOOK.md）で必ず、制作でも入出力の決まった処理があれば使う。
 「検査が通った」が空振りでないことを、負例（失敗すべき入力）の有無で確かめる。
@@ -16,7 +16,7 @@
   合格なのに証拠が空、正例が 3 件未満、境界が 0 件
 
 使い方:
-  python3 _tools/check_cases.py                       # 04_evals/cases.csv
+  python3 _tools/check_cases.py                       # 05_evals/cases.csv
   python3 _tools/check_cases.py path/to/cases.csv --allow-pending   # 作業の途中
 """
 import argparse
@@ -82,7 +82,7 @@ def check(path, allow_pending):
 
 def main():
     ap = argparse.ArgumentParser(description="評価ケース表の検査")
-    ap.add_argument("path", nargs="?", default="04_evals/cases.csv")
+    ap.add_argument("path", nargs="?", default="05_evals/cases.csv")
     ap.add_argument("--allow-pending", action="store_true", help="未実行を警告にとどめる（作業の途中）")
     a = ap.parse_args()
     p = Path(a.path) if Path(a.path).is_absolute() else ROOT / a.path

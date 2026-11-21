@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """会話履歴（02_conversations/）の作成・追記・検索ツール。標準ライブラリのみで動く。
 
-toc・find・show は、締めたサイクルの記録（05_logs/*/conversations/）も見る。
+toc・find・show は、締めたサイクルの記録（04_logs/*/conversations/）も見る。
 new・add（番号の省略時）は、02_conversations/ だけを対象にする。
 
 使い方:
@@ -20,14 +20,14 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CONV = ROOT / "02_conversations"
-LOGS = ROOT / "05_logs"
+LOGS = ROOT / "04_logs"
 END = "-----\n[toTop](#totoppage)\n"
 NAME_RE = re.compile(r"^(\d{4})-(\d{2})_(.+)\.md$")
 SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv"}
 
 
 def conv_files(archive=True):
-    """記録ファイルを新しい順（更新時刻）で返す。archive なら 05_logs/*/conversations/ も含める。"""
+    """記録ファイルを新しい順（更新時刻）で返す。archive なら 04_logs/*/conversations/ も含める。"""
     fs = [p for p in CONV.glob("*.md") if NAME_RE.match(p.name)] if CONV.is_dir() else []
     if archive and LOGS.is_dir():
         fs += [p for p in LOGS.glob("*/conversations/*.md") if NAME_RE.match(p.name)]

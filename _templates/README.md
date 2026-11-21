@@ -9,7 +9,7 @@
 | `_BRIEF.md` | `BRIEF.md` | 知的作業 |
 | `_PLAYBOOK.md` | `PLAYBOOK.md` | 専門作業 |
 | `_LEDGER.csv` | `LEDGER.csv` | 知的作業 |
-| `_cases.csv` | `04_evals/cases.csv` | 専門作業 |
+| `_cases.csv` | `05_evals/cases.csv` | 専門作業 |
 | `_PROGRESS.md` | `PROGRESS.md` | すべて |
 | `_DECISIONS.md` | `DECISIONS.md` | すべて |
 | `_KICKOFF.build.md`／`_KICKOFF.knowledge.md`／`_KICKOFF.craft.md` | `KICKOFF.md` | 対象ごと |

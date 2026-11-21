@@ -52,7 +52,7 @@
 - 制約、やらないこと：{{CONSTRAINTS}}
 
 ## 評価ケース
-`04_evals/cases.csv` に 1 行 1 件で書く（列：id／kind／input／expected／result／evidence／note）。
+`05_evals/cases.csv` に 1 行 1 件で書く（列：id／kind／input／expected／result／evidence／note）。
 kind は 正例（ふつうの入力）・境界（判断の基準のきわ）・負例（失敗すべき入力。止まるか、警告を出すか）。
 過去の実例から作り、正例 3 件・境界 1 件・負例 1 件以上を目安にする。
 
@@ -61,7 +61,7 @@ kind は 正例（ふつうの入力）・境界（判断の基準のきわ）�
 ユーザーの言葉での目安：{{DONE_HINT}}
 
 1. 評価ケースがすべて実行済みで、不合格 0 件、負例が 1 件以上（確認：`python3 _tools/check_cases.py`）
-2. 手順書のとおりに、実例 1 件を最初から最後まで通せる（確認：通した記録を `04_evals/` に置く）
+2. 手順書のとおりに、実例 1 件を最初から最後まで通せる（確認：通した記録を `05_evals/` に置く）
 3. [要記入: 合格条件。例「スキルの description に呼び出しの言葉が 3 つ以上（確認：`check_skill.py`）」]
 4. [要記入: 合格条件]
 

@@ -5,9 +5,9 @@ Opus や Sonnet でも結果が安定するように、計画・記憶・検査�
 
 - **制作**（アプリ、ゲーム、映像、音楽、絵、ツール）は `SPEC.md` を使う
 - **知的作業**（調査、分析、レビュー、執筆、意思決定）は `BRIEF.md` と証拠台帳 `LEDGER.csv` を使う
-- **専門作業**（繰り返す作業を、手順書・チェックリスト・スキル・スクリプトにする）は `PLAYBOOK.md` と評価ケース表 `04_evals/cases.csv` を使う
+- **専門作業**（繰り返す作業を、手順書・チェックリスト・スキル・スクリプトにする）は `PLAYBOOK.md` と評価ケース表 `05_evals/cases.csv` を使う
 - 始め方は 4 つ：**新規**、進行中のプロジェクトへの**後付け**、別の技術や版への**移行**、他のリポジトリを**複製して改造**
-- 会話は毎ターン `02_conversations/` に記録し、振り返ってルールに戻す。版を重ねるときは `05_logs/` に版ごとに締める
+- 会話は毎ターン `02_conversations/` に記録し、振り返ってルールに戻す。版を重ねるときは `04_logs/` に版ごとに締める
 
 型の選び方と、始め方ごとの手順は [docs/usecases.md](docs/usecases.md) にある。
 
@@ -46,7 +46,7 @@ python3 claude-project-template-ja/_tools/adopt.py --target my-app --apply --lin
 |---|---|
 | 制作 | `SPEC.md`、`PROGRESS.md`、`DECISIONS.md`、`KICKOFF.md` |
 | 知的作業 | `BRIEF.md`、`LEDGER.csv`、`PROGRESS.md`、`DECISIONS.md`、`KICKOFF.md` |
-| 専門作業 | `PLAYBOOK.md`、`04_evals/cases.csv`、`PROGRESS.md`、`DECISIONS.md`、`KICKOFF.md` |
+| 専門作業 | `PLAYBOOK.md`、`05_evals/cases.csv`、`PROGRESS.md`、`DECISIONS.md`、`KICKOFF.md` |
 
 始め方（後付け・移行・複製して改造）を選ぶと、仕様のファイルに「今の状態」「移行元と移行先」「複製元」の節と、
 それに合う最初のマイルストーンが入る。
@@ -61,7 +61,7 @@ python3 claude-project-template-ja/_tools/adopt.py --target my-app --apply --lin
 | 4. 検証 | 機械検査、実物の通し、独立した審査、仕込み検査 | `/verify` |
 | 5. 出力 | ★承認の後、最終の出力 | |
 | 区切り | セッションを終える・別セッションに渡す | `/handoff` |
-| 次の版 | 版の記録を `05_logs/` に締め、次の版の計画（`PLAN.md`）を作る | `/next-cycle` |
+| 次の版 | 版の記録を `04_logs/` に締め、次の版の計画（`PLAN.md`）を作る | `/next-cycle` |
 | 随時 | 履歴からルールを見直す | `/retro` |
 
 ## ファイルの地図
@@ -76,8 +76,8 @@ python3 claude-project-template-ja/_tools/adopt.py --target my-app --apply --lin
 | `01_sources/` | 資料、素材、過去の実例、複製元を置く |
 | `02_conversations/` | 会話の記録 |
 | `03_outputs/` | 成果物を置く（別の git リポジトリにしてもよい → [docs/usecases.md](docs/usecases.md)） |
-| `04_evals/` | 評価の実行記録（実物の入力を通した入出力）と、評価ケース表 |
-| `05_logs/` | 締めた版の記録（仕様の写し、計画、引き継ぎ、会話、評価） |
+| `05_evals/` | 評価の実行記録（実物の入力を通した入出力）と、評価ケース表 |
+| `04_logs/` | 締めた版の記録（仕様の写し、計画、引き継ぎ、会話、評価） |
 | `_tools/` | 検査・記録・セットアップのスクリプト（Python の標準ライブラリだけで動く）→ [一覧](_tools/README.md) |
 | `_examples/` | ヒアリングの質問、答えとプロンプトの見本、検査の見本 → [説明](_examples/README.md) |
 | `.claude/skills/` | スキル：`setup-project`、`milestone`、`verify`、`handoff`、`next-cycle`、`retro` |
@@ -91,7 +91,7 @@ python3 claude-project-template-ja/_tools/adopt.py --target my-app --apply --lin
 |---|---|---|
 | `SPEC.md`／`BRIEF.md`／`PLAYBOOK.md` | 仕様と合格条件の正本（対象ごとに 1 つ） | セットアップ |
 | `LEDGER.csv` | 証拠台帳（資料から拾った事実と出所） | セットアップ（知的作業） |
-| `04_evals/cases.csv` | 評価ケース表（正例・境界・負例） | セットアップ（専門作業） |
+| `05_evals/cases.csv` | 評価ケース表（正例・境界・負例） | セットアップ（専門作業） |
 | `PROGRESS.md` | 現在地、チェックリスト、次の一手。セッションをまたぐ記憶 | セットアップ |
 | `DECISIONS.md` | 決めたことと、失敗から決めたルールの台帳 | セットアップ |
 | `KICKOFF.md` | 最初のプロンプト（対象と始め方で中身が違う） | セットアップ |
@@ -99,7 +99,7 @@ python3 claude-project-template-ja/_tools/adopt.py --target my-app --apply --lin
 | `MANUAL-CHECK.md` | 対話でしか確かめられない動作を、人が確かめる手順 | `/verify` |
 | `PLAN.md` | 次の版の改修計画（承認の後、仕様のファイルに反映する） | `/next-cycle` |
 
-セットアップをやり直すときは `python3 _tools/setup.py --force`。`DECISIONS.md`・`LEDGER.csv`・`04_evals/cases.csv` は
+セットアップをやり直すときは `python3 _tools/setup.py --force`。`DECISIONS.md`・`LEDGER.csv`・`05_evals/cases.csv` は
 書き足していく台帳なので、`--force` でも上書きしない。
 
 ## 考え方
@@ -110,7 +110,7 @@ python3 claude-project-template-ja/_tools/adopt.py --target my-app --apply --lin
 4. **検査を機械にする**：制作はテストと画像、知的作業は証拠台帳、専門作業は評価ケース。通るまで次へ進まない
 5. **検査そのものを疑う**：新しい検査は、わざと壊した入力で落ちることを確かめる。完成の前に、実物の入力を実際の手順で通す
 6. **別の目で見る**：制作の経緯を知らない審査役に見せ、仕込み検査で審査そのものを確かめる
-7. **履歴をルールに戻す**：同じ指摘が 2 回出たら、検査かルールにする。版の区切りで `05_logs/` に締めて読み返す
+7. **履歴をルールに戻す**：同じ指摘が 2 回出たら、検査かルールにする。版の区切りで `04_logs/` に締めて読み返す
 
 ## モデルの使い分け（目安）
 

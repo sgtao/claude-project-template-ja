@@ -7,12 +7,12 @@ description: テンプレートから始めたリポジトリの初期セット�
 
 答えを集めて `_tools/setup.py` に渡し、`_templates/` のひな形から、リポジトリの直下に
 `SPEC.md`（制作）・`BRIEF.md`（知的作業）・`PLAYBOOK.md`（専門作業）のどれか、最初のプロンプト `KICKOFF.md`、
-`PROGRESS.md`、`DECISIONS.md`（知的作業は `LEDGER.csv`、専門作業は `04_evals/cases.csv` も）を作る。質問・選択肢はすべて日本語で書く。
+`PROGRESS.md`、`DECISIONS.md`（知的作業は `LEDGER.csv`、専門作業は `05_evals/cases.csv` も）を作る。質問・選択肢はすべて日本語で書く。
 
 ## 手順
 
 1. 直下に `SPEC.md`・`BRIEF.md`・`PLAYBOOK.md`・`KICKOFF.md`・`PROGRESS.md` のどれかがすでにあれば（`setup.py` と同じ判定）、セットアップ済みとして止まり、やり直すかを聞く。
-   後付けで、それがプロジェクトにもとからあったファイルなら、`--force` で作り直すと `05_logs/pre-setup-<日付>/` に写されることを
+   後付けで、それがプロジェクトにもとからあったファイルなら、`--force` で作り直すと `04_logs/pre-setup-<日付>/` に写されることを
    伝え、作り直した後で、写した中身を「今の状態（後付け）」に移す。
    `_examples/hearing/questions.json` を読む。質問の正本はこのファイルで、ここに質問を書き足さない。
 2. ユーザーの最初の依頼文から答えが分かる項目は、聞かずに埋める。とくに始め方（`MODE`）は、

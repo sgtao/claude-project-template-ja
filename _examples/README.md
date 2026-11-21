@@ -28,7 +28,7 @@
 answers/current.json ＋ _templates/ のひな形
    ▼
 SPEC.md／BRIEF.md／PLAYBOOK.md（下書き）＋ KICKOFF.md ＋ PROGRESS.md ＋ DECISIONS.md
-（＋ 知的作業は LEDGER.csv、専門作業は 04_evals/cases.csv）
+（＋ 知的作業は LEDGER.csv、専門作業は 05_evals/cases.csv）
    │  KICKOFF.md を Claude に渡す
    ▼
 [要記入] が埋まった仕様のファイル ──▶ ユーザーが確認 ──▶ /milestone

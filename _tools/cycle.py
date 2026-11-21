@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-"""サイクル（版）を締めて、記録を 05_logs/ に移し、次のサイクルの計画を始める。標準ライブラリのみで動く。
+"""サイクル（版）を締めて、記録を 04_logs/ に移し、次のサイクルの計画を始める。標準ライブラリのみで動く。
 
 1 つのプロジェクトで v0.0.1 → v0.0.2 → … と改修を重ねるときに使う。`/next-cycle` スキルから呼ぶ。
 
-  close <名前>  : 今のサイクルの記録を 05_logs/<名前>/ にまとめる。既定は試し（何も変えずに予定だけ出す）。
+  close <名前>  : 今のサイクルの記録を 04_logs/<名前>/ にまとめる。既定は試し（何も変えずに予定だけ出す）。
                   --apply で実行する。
-                  写す（直下に残す）: 仕様のファイル、PROGRESS.md、DECISIONS.md、04_evals/cases.csv
+                  写す（直下に残す）: 仕様のファイル、PROGRESS.md、DECISIONS.md、05_evals/cases.csv
                   移す（直下から消える）: PLAN.md、HANDOFF.md、MANUAL-CHECK.md、02_conversations/ の記録、
-                                          04_evals/ の実行記録（cases.csv と README.md を除く）
-                  04_evals/cases.csv は、写しの証拠のパスを移した先に直し、直下のほうは result を「未実行」、
+                                          05_evals/ の実行記録（cases.csv と README.md を除く）
+                  05_evals/cases.csv は、写しの証拠のパスを移した先に直し、直下のほうは result を「未実行」、
                   evidence を空に戻す（前の版の結果は note に残す）。次の版で評価をやり直すため
                   --keep <番号> で、続けて書き足す会話の記録を残す（例 --keep 1121-02）
-                  --merge で、すでにある 05_logs/<名前>/（版の途中で計画を置いていた場合など）に足す。
+                  --merge で、すでにある 04_logs/<名前>/（版の途中で計画を置いていた場合など）に足す。
                   同じ名前のファイルがあれば止める
   start <名前>  : _templates/_PLAN.md から、次のサイクルの PLAN.md を作る
   list          : 締めたサイクルの一覧
@@ -31,7 +31,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-LOGS = ROOT / "05_logs"
+LOGS = ROOT / "04_logs"
 SPEC_DOCS = ("SPEC.md", "BRIEF.md", "PLAYBOOK.md")
 COPY = (*SPEC_DOCS, "PROGRESS.md", "DECISIONS.md", "LEDGER.csv")
 MOVE = ("PLAN.md", "HANDOFF.md", "MANUAL-CHECK.md")
@@ -67,7 +67,7 @@ def plan_close(cycle, keep):
         m = CONV_RE.match(p.name)
         if m and m.group(1) not in keep:
             acts.append(("移す", p, dest / "conversations" / p.name))
-    ev = ROOT / "04_evals"
+    ev = ROOT / "05_evals"
     for p in sorted(ev.iterdir()) if ev.is_dir() else []:
         if p.name in ("README.md", ".DS_Store", ".gitkeep"):
             continue
@@ -85,8 +85,8 @@ def roll_cases(root_csv, snap_csv, cycle):
         cols, rows = rd.fieldnames or [], list(rd)
     if not {"result", "evidence"} <= set(cols):
         return 0
-    moved = f"05_logs/{cycle}/evals/"
-    fix = lambda ev: ";".join(moved + s.strip()[len("04_evals/"):] if s.strip().startswith("04_evals/") else s.strip()
+    moved = f"04_logs/{cycle}/evals/"
+    fix = lambda ev: ";".join(moved + s.strip()[len("05_evals/"):] if s.strip().startswith("05_evals/") else s.strip()
                               for s in ev.replace("；", ";").split(";")) if ev else ev
     snap = [{**r, "evidence": fix(r.get("evidence") or "")} for r in rows]
     if "note" not in cols:
@@ -99,7 +99,7 @@ def roll_cases(root_csv, snap_csv, cycle):
             continue
         prev = f"前の版 {cycle}: {r.get('result') or '未記入'}"
         if (r.get("evidence") or "").strip():
-            prev += f"（証拠は 05_logs/{cycle}/evals/ の写しを参照）"
+            prev += f"（証拠は 04_logs/{cycle}/evals/ の写しを参照）"
         nxt.append({**r, "result": "未実行", "evidence": "", "note": prev + (f" ｜ {old}" if old else "")})
     for path, data in ((snap_csv, snap), (root_csv, nxt)):
         with path.open("w", encoding="utf-8", newline="") as f:
@@ -113,7 +113,7 @@ def readme(cycle, acts, keep):
     rel = lambda p: p.relative_to(ROOT).as_posix()
     rows = "\n".join(f"| `{rel(d)}` | {a} | `{rel(s)}` |" for a, s, d in acts)
     kept = f"\n続けて書き足すため、直下に残した会話の記録：{', '.join(keep)}\n" if keep else ""
-    return f"""# 05_logs/{cycle}/ — サイクル {cycle} の記録
+    return f"""# 04_logs/{cycle}/ — サイクル {cycle} の記録
 
 締めた日：{datetime.date.today().isoformat()}　締めた時点のコミット：{head_commit()}
 
@@ -135,17 +135,17 @@ def cmd_close(a):
         sys.exit("名前は英小文字・数字と . - で書いてください。例: v0-0-1、v1.2、2026q1")
     dest, acts = plan_close(a.name, set(a.keep or []))
     if dest.exists() and not a.merge:
-        sys.exit(f"05_logs/{a.name}/ はすでにあります。別の名前にするか、そこに足すなら --merge を付けてください。")
+        sys.exit(f"04_logs/{a.name}/ はすでにあります。別の名前にするか、そこに足すなら --merge を付けてください。")
     clash = [d.relative_to(ROOT).as_posix() for _, _, d in acts if d.exists()]
     if clash:
-        sys.exit("同じ名前のファイルが 05_logs にすでにあります: " + ", ".join(clash))
+        sys.exit("同じ名前のファイルが 04_logs にすでにあります: " + ", ".join(clash))
     if not acts:
         sys.exit("移すものも写すものもありません。")
     print(f"サイクル {a.name} を締めます（{'実行' if a.apply else '試し。何も変えていません'}）")
     for act, s, d in acts:
         print(f"  {act}  {s.relative_to(ROOT)}  →  {d.relative_to(ROOT)}")
     if any(s.name == "cases.csv" for _, s, _ in acts):
-        print("  戻す  04_evals/cases.csv（result を「未実行」、evidence を空に。前の版の結果は note に残す）")
+        print("  戻す  05_evals/cases.csv（result を「未実行」、evidence を空に。前の版の結果は note に残す）")
     if not a.apply:
         print("\n実行するには --apply を付けてください。移すファイルは直下から消えます（git には残ります）。")
         return
@@ -156,13 +156,13 @@ def cmd_close(a):
             shutil.copy2(s, d)
         else:
             shutil.move(str(s), str(d))
-    cases = ROOT / "04_evals" / "cases.csv"
+    cases = ROOT / "05_evals" / "cases.csv"
     n = roll_cases(cases, dest / "evals" / "cases.csv", a.name) if cases.is_file() and (dest / "evals" / "cases.csv").is_file() else 0
     if n:
-        print(f"04_evals/cases.csv の {n} 件を「未実行」に戻しました（前の版の結果は note と 05_logs/{a.name}/evals/ にあります）")
+        print(f"05_evals/cases.csv の {n} 件を「未実行」に戻しました（前の版の結果は note と 04_logs/{a.name}/evals/ にあります）")
     rd = dest / ("README_cycle.md" if (dest / "README.md").exists() else "README.md")
     rd.write_text(readme(a.name, acts, a.keep or []), encoding="utf-8")
-    print(f"\n締めました: 05_logs/{a.name}/（{rd.name} に一覧）")
+    print(f"\n締めました: 04_logs/{a.name}/（{rd.name} に一覧）")
     print(f"次の一手: python3 _tools/cycle.py start <次の名前> で PLAN.md を作る")
 
 
@@ -178,7 +178,7 @@ def cmd_start(a):
     prev = sorted((p for p in LOGS.iterdir() if p.is_dir()), key=lambda p: p.stat().st_mtime) if LOGS.is_dir() else []
     doc = next((n for n in SPEC_DOCS if (ROOT / n).exists()), "SPEC.md")
     vals = {"CYCLE": a.name, "DATE": datetime.date.today().isoformat(), "DOC": doc,
-            "PREV": f"05_logs/{prev[-1].name}/" if prev else "（前のサイクルなし）"}
+            "PREV": f"04_logs/{prev[-1].name}/" if prev else "（前のサイクルなし）"}
     text = re.sub(r"\{\{([A-Z_]+)\}\}", lambda m: vals.get(m.group(1), f"[要記入: {m.group(1)}]"),
                   tpl.read_text(encoding="utf-8"))
     plan.write_text(text, encoding="utf-8")
@@ -198,10 +198,10 @@ def cmd_list(a):
 def main():
     ap = argparse.ArgumentParser(description="サイクルを締めて、次を始める")
     sub = ap.add_subparsers(dest="cmd", required=True)
-    s = sub.add_parser("close", help="今のサイクルの記録を 05_logs/ にまとめる")
+    s = sub.add_parser("close", help="今のサイクルの記録を 04_logs/ にまとめる")
     s.add_argument("name"); s.add_argument("--apply", action="store_true")
     s.add_argument("--keep", action="append", help="直下に残す会話の番号（例 1121-02）")
-    s.add_argument("--merge", action="store_true", help="すでにある 05_logs/<名前>/ に足す")
+    s.add_argument("--merge", action="store_true", help="すでにある 04_logs/<名前>/ に足す")
     s.set_defaults(f=cmd_close)
     s = sub.add_parser("start", help="次のサイクルの PLAN.md を作る"); s.add_argument("name"); s.set_defaults(f=cmd_start)
     s = sub.add_parser("list", help="締めたサイクルの一覧"); s.set_defaults(f=cmd_list)

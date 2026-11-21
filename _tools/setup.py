@@ -6,9 +6,9 @@
 
   制作（build）       : SPEC.md、PROGRESS.md、DECISIONS.md、KICKOFF.md
   知的作業（knowledge）: BRIEF.md、LEDGER.csv、PROGRESS.md、DECISIONS.md、KICKOFF.md
-  専門作業（craft）    : PLAYBOOK.md、04_evals/cases.csv、PROGRESS.md、DECISIONS.md、KICKOFF.md
+  専門作業（craft）    : PLAYBOOK.md、05_evals/cases.csv、PROGRESS.md、DECISIONS.md、KICKOFF.md
 
-DECISIONS.md、LEDGER.csv、04_evals/cases.csv は書き足していく台帳なので、すでにあれば --force でも上書きしない。
+DECISIONS.md、LEDGER.csv、05_evals/cases.csv は書き足していく台帳なので、すでにあれば --force でも上書きしない。
 
 ひな形の書き方:
   {{KEY}}                     答えを入れる。答えがなければ [要記入: KEY]
@@ -32,7 +32,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 EX = ROOT / "_examples"
 TPL = ROOT / "_templates"
-LEDGERS = {"DECISIONS.md", "LEDGER.csv", "04_evals/cases.csv"}  # 書き足していく台帳。あれば残す
+LEDGERS = {"DECISIONS.md", "LEDGER.csv", "05_evals/cases.csv"}  # 書き足していく台帳。あれば残す
 DOCS = {"build": "SPEC.md", "knowledge": "BRIEF.md", "craft": "PLAYBOOK.md"}
 SPEC_DOCS = tuple(DOCS.values())
 LABELED = ("KIND", "MODE", "WORK_TYPE", "CRAFT_TYPE", "SYNC_POLICY", "COMMIT_POLICY", "MAIN_MODEL")
@@ -50,7 +50,7 @@ def plan_files(kind):
     if kind == "knowledge":
         files.append((TPL / "_LEDGER.csv", "LEDGER.csv"))
     if kind == "craft":
-        files.append((TPL / "_cases.csv", "04_evals/cases.csv"))
+        files.append((TPL / "_cases.csv", "05_evals/cases.csv"))
     return doc, files
 
 
@@ -164,14 +164,14 @@ def main():
     ap.add_argument("--out", default=str(ROOT), help="出力先（既定はリポジトリのトップ）")
     ap.add_argument("--force", action="store_true",
                     help="作成済みの SPEC.md／BRIEF.md／PLAYBOOK.md、KICKOFF.md、PROGRESS.md などを作り直す。"
-                         "上書きする前に 05_logs/pre-setup-<日付>/ に写す（台帳は上書きしない）")
+                         "上書きする前に 04_logs/pre-setup-<日付>/ に写す（台帳は上書きしない）")
     a = ap.parse_args()
 
     questions = load_questions()
     done = [n for n in (*SPEC_DOCS, "KICKOFF.md", "PROGRESS.md") if (Path(a.out) / n).exists()]
     if done and not a.force:  # 答える前に止める（答えた後で無駄にしない）
         sys.exit(f"セットアップ済みです（{', '.join(done)} があります）。やり直すなら --force を付けてください"
-                 "（上書きする前に、今のファイルを 05_logs/pre-setup-<日付>/ に写します）。")
+                 "（上書きする前に、今のファイルを 04_logs/pre-setup-<日付>/ に写します）。")
     if a.answers:
         ans = json.loads(Path(a.answers).read_text(encoding="utf-8"))
     else:
@@ -218,10 +218,10 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     over = [name for _, name in files if name not in kept and (out / name).exists()]
     if over:  # --force でも、上書きする前のファイルは消さずに写しておく
-        bk = out / "05_logs" / f"pre-setup-{ans['DATE']}"
+        bk = out / "04_logs" / f"pre-setup-{ans['DATE']}"
         n = 2
         while bk.exists():
-            bk = out / "05_logs" / f"pre-setup-{ans['DATE']}-{n}"
+            bk = out / "04_logs" / f"pre-setup-{ans['DATE']}-{n}"
             n += 1
         for name in over:
             (bk / name).parent.mkdir(parents=True, exist_ok=True)

@@ -13,7 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 # テンプレートに最初から入っているファイル
 REQUIRED = ["README.md", "CLAUDE.md", "HISTORY.md", ".gitignore", ".claude/settings.json",
-            "02_conversations/README.md", "04_evals/README.md", "05_logs/README.md", "_examples/hearing/questions.json",
+            "02_conversations/README.md", "05_evals/README.md", "04_logs/README.md", "_examples/hearing/questions.json",
             "_tools/conv.py", "_tools/setup.py", "_tools/check_spec.py", "_tools/check_cases.py",
             "_tools/check_skill.py", "_tools/selftest.py", "_tools/cycle.py",
             "_templates/_PLAN.md", "_templates/_HANDOFF.md", "_templates/_MANUAL-CHECK.md",
@@ -25,7 +25,7 @@ REQUIRED = ["README.md", "CLAUDE.md", "HISTORY.md", ".gitignore", ".claude/setti
 # セットアップで作られるファイル（仕様のファイルごと）
 CREATED = {"SPEC.md": ["PROGRESS.md", "DECISIONS.md", "KICKOFF.md"],
            "BRIEF.md": ["PROGRESS.md", "DECISIONS.md", "KICKOFF.md", "LEDGER.csv"],
-           "PLAYBOOK.md": ["PROGRESS.md", "DECISIONS.md", "KICKOFF.md", "04_evals/cases.csv"]}
+           "PLAYBOOK.md": ["PROGRESS.md", "DECISIONS.md", "KICKOFF.md", "05_evals/cases.csv"]}
 
 
 def main():
