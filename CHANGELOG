@@ -1,0 +1,39 @@
+## [0.0.2] - 2026-11-22
+
+新規開発の他に既存プロジェクトの改修・移行、知的作業・専門作業用テンプレート追加。
+
+### 対象と始め方が広がりました
+- 対象が 3 つになりました：制作（SPEC.md）／知的作業（BRIEF.md + LEDGER.csv）／専門作業の習熟・自動化（PLAYBOOK.md + 評価ケース）
+- 始め方が 4 つになりました：新規／後付け（adopt）／移行（migrate）／複製して改造（fork）。マイルストーン M1 が始め方ごとに変わります
+- `adopt.py`：既存のプロジェクトに、上書きせずにテンプレートの仕組みだけを入れます。`--update` で古い版の仕組みを新しくできます
+
+### 版と引き継ぎ
+- `cycle.py` と `/next-cycle`：版を締めて記録を `04_logs/<名前>/` に移し、次の版の `PLAN.md` を作ります
+- `handoff.py` と `/handoff`：引き継ぎメモを `06_handoff/` に作ります
+- `conv.py` が、締めた記録も検索します
+
+### 成果物の .gitignore
+- セットアップが `03_outputs/<名前>/` に最初の `.gitignore` を作ります。複製元の `.gitignore` を優先し、制作は github/gitignore の言語別（ネットが使えなければ同梱の写し）に補完を足し、それ以外はテンプレートのものにします
+
+### 検査
+- `check_cases.py`、`check_skill.py`、自己検査 `selftest.py`（12 通りのセットアップ、サイクル、後付け、`.gitignore`）を追加しました
+
+### 注意（0.0.1 から更新する人へ）
+- フォルダ番号が変わりました：`05_logs` → `04_logs`、`04_evals` → `05_evals`、`06_handoff` を追加。古い版のプロジェクトは、フォルダ名を直してから `python3 _tools/adopt.py --target <フォルダ> --update --apply` を実行してください
+
+### 始め方
+```
+mkdir my-project && cd my-project
+gh release download --repo sgtao/claude-project-template-ja --archive tar.gz -O - | tar xz --strip-components=1
+git init && git add -A && git commit -m "init from template"
+```
+
+-----
+## [v0.0.1] - 2026-11-19
+
+初回リリース。
+
+Claude Code で、長い制作や知的作業を最後までやり切るためのテンプレートリポジトリ。
+
+-----
+
