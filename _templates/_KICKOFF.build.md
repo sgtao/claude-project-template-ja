@@ -19,6 +19,9 @@ SPEC.md を、実装の前に完成させてください。コードはまだ書
      使う言語と道具の版（python3 --version など）を確かめ、「実行環境の版」に書く
    - マイルストーンの最初は、SPEC.md の表の M1 の形。以降は各 1〜2 時間の規模
    - リスクを大きい順に 3 つと、その回避策
+   - 使う言語が決まったら、成果物の `.gitignore`（セットアップで作成済み）を確かめる。
+     「テンプレートの .gitignore にした」と出ていたら、`python3 _tools/gitignore.py --dir <成果物のフォルダ> --langs <言語> --force` で
+     github/gitignore の該当ファイル + テンプレートの補完に作り直す
 2. python3 _tools/check_spec.py SPEC.md を実行し、不合格を直す
 3. 迷う点は、仮の前提を置いて PROGRESS.md に書いて進める。
    仮の前提では仕様が決まらない点だけ、最後にまとめて質問する

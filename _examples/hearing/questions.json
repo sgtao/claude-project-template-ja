@@ -86,6 +86,13 @@
       "default": "指定なし（Claude が選び、理由を仕様のファイルに書く）"
     },
     {
+      "key": "GI_LANGS",
+      "ask": "成果物の .gitignore に使う言語・技術はどれですか？（github/gitignore から選びます。分からなければ空のまま。使いたい技術やフォルダの中身から判定します）",
+      "when": {"KIND": ["build"]},
+      "example": "Python／Node（TypeScript や React もこれ）／Go／Swift／Unity",
+      "default": ""
+    },
+    {
       "key": "CURRENT_STATE",
       "ask": "今あるもの（リポジトリや成果物の場所、動いている範囲、テストの有無、途中の作業）を教えてください。",
       "when": {"MODE": ["adopt", "migrate"]},

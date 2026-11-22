@@ -24,6 +24,13 @@
 | `_MANUAL-CHECK.md` | `MANUAL-CHECK.md` | `/verify` の実物の通しで、対話でしか確かめられない動作があるとき |
 | `_PLAN.md` | `PLAN.md` | `/next-cycle`（`cycle.py start`） |
 
+成果物の `.gitignore` の材料（`_tools/gitignore.py` だけが読む）：
+
+| ひな形 | 中身 |
+|---|---|
+| `_gitignore.template` | テンプレートの `.gitignore`。`#@ safety`（秘密・個人設定）／`#@ extras`（一時ファイル・生成物・OS）／`#@ basic`（Python と Node の基本）の節 |
+| `gitignore/` | github/gitignore の主要言語の同梱の写し（ネットが使えないときに使う） |
+
 ## 書き方
 - `{{KEY}}`：ヒアリングの答えを入れる。`{{KEY_LABEL}}` は選択肢の表示名
 - `{{> _MODE.md}}`：ほかのひな形をその場所に取り込む

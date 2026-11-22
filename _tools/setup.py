@@ -9,6 +9,7 @@
   専門作業（craft）    : PLAYBOOK.md、05_evals/cases.csv、PROGRESS.md、DECISIONS.md、KICKOFF.md
 
 DECISIONS.md、LEDGER.csv、05_evals/cases.csv は書き足していく台帳なので、すでにあれば --force でも上書きしない。
+あわせて、成果物のフォルダ（03_outputs/ の中）に最初の .gitignore を作る（_tools/gitignore.py。すでにあれば作らない）。
 
 ひな形の書き方:
   {{KEY}}                     答えを入れる。答えがなければ [要記入: KEY]
@@ -158,6 +159,21 @@ def fill(text, ans):
     return re.sub(r"\{\{([A-Z_]+)\}\}", rep, text)
 
 
+def make_gitignore(out, ans):
+    """成果物のフォルダ（03_outputs/ の中）に、最初の .gitignore を作る。失敗してもセットアップは止めない。"""
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import gitignore
+        dest, notes = gitignore.create(out, answers=ans)
+    except Exception as e:  # ネットや書き込みの失敗でセットアップを無駄にしない
+        print(f"注意: .gitignore は作れませんでした（{e}）。python3 _tools/gitignore.py で作ってください。")
+        return
+    for n in notes:
+        print(("・" if dest else "注意: ") + n)
+    if dest:
+        print(f"成果物の .gitignore を作りました: {dest.relative_to(out).as_posix()}")
+
+
 def main():
     ap = argparse.ArgumentParser(description="ヒアリング形式の初期セットアップ")
     ap.add_argument("--answers", help="答えの JSON ファイル")
@@ -244,6 +260,7 @@ def main():
     for other in SPEC_DOCS:
         if other != doc and (out / other).exists():
             print(f"注意: 使わない {other} が残っています。不要なら消してください。")
+    make_gitignore(out, ans)
     print("次の一手: Claude Code を開き、KICKOFF.md の枠の中を最初のメッセージとして渡してください。")
 
 

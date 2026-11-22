@@ -41,6 +41,9 @@ python3 _tools/setup.py        # または Claude Code で /setup-project
 - 移行：移行元が別のリポジトリなら、`01_sources/` に置く（読むだけ）か、`TARGET_DIR` に移行先の作業場所を書く
 - 複製して改造：複製元は `01_sources/` に置き（読むだけ）、作り替える写しは `03_outputs/<名前>/` に置く。
   写しを独立したリポジトリにするなら、このリポジトリの `.gitignore` に `03_outputs/<名前>/` を足す
+- `.gitignore`：セットアップが、成果物のフォルダ（`TARGET_DIR`。未指定なら `03_outputs/`）に最初の 1 つを作る。
+  複製して改造は複製元の `.gitignore` を優先、新規・後付け・移行の制作は github/gitignore の言語別 + テンプレートの補完（ネットが使えなければ同梱の写し）、
+  知的作業・専門作業はテンプレートのもの。作り直しは `python3 _tools/gitignore.py --dir <フォルダ> --langs <言語> --force`
 
 ### 後付けの始め方
 既存のフォルダに、このテンプレートの仕組みだけを入れる。既存の CLAUDE.md・README.md・settings.json・同名のスキルは上書きしない。

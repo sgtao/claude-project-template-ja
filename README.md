@@ -102,6 +102,7 @@ python3 claude-project-template-ja/_tools/adopt.py --target my-app --apply --lin
 
 セットアップをやり直すときは `python3 _tools/setup.py --force`。`DECISIONS.md`・`LEDGER.csv`・`05_evals/cases.csv` は
 書き足していく台帳なので、`--force` でも上書きしない。
+成果物の `.gitignore` もセットアップが作る（`_tools/gitignore.py`。すでにあれば作らない）。
 
 ## 考え方
 

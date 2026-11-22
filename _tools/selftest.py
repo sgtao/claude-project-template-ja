@@ -15,6 +15,7 @@
   python3 _tools/selftest.py setup checks # 一部だけ
 """
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -24,6 +25,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 TOOLS = ROOT / "_tools"
+TPL_DIR = ROOT / "_templates" / "gitignore"
 KINDS = {"build": "SPEC.md", "knowledge": "BRIEF.md", "craft": "PLAYBOOK.md"}
 MODES = ("new", "adopt", "migrate", "fork")
 # 始め方ごとに、その始め方のときだけ出る見出し
@@ -380,12 +382,146 @@ def t_adopt(tmp):
        and "中身が違う" in r.stdout, "直した同名のスキルは上書きせず、違いを表示する")
 
 
+def gi_file(out, rel="03_outputs"):
+    p = out / rel / ".gitignore"
+    return p.read_text(encoding="utf-8") if p.exists() else None
+
+
+def t_gitignore(tmp):
+    """成果物の .gitignore: 選び方（複製元優先／言語別／テンプレート）、置き場所、作り直し、ネット失敗。"""
+    print("成果物の .gitignore")
+    os.environ["GITIGNORE_OFFLINE"] = "1"  # 試しはネットを使わない（同梱の写しで通る）
+    # 12 通りのセットアップで、どれも .gitignore ができる（外に作るもの以外）
+    for kind in KINDS:
+        for mode in MODES:
+            out, r = setup_into(tmp, base_answers(kind, mode), f"s-{kind}-{mode}")
+            g = gi_file(out)
+            ok(r.returncode == 0 and g is not None and ".env" in g and "secrets/" in g,
+               f"{kind}/{mode}: 03_outputs/.gitignore ができ、秘密の行がある")
+    # 制作 + 言語 → github/gitignore の言語別 + 補完
+    a = base_answers("build", "new")
+    a.update(TARGET_DIR="03_outputs/my-app/（別の git リポジトリ）", GI_LANGS="Python, TypeScript")
+    out, r = setup_into(tmp, a, "lang")
+    g = gi_file(out, "03_outputs/my-app") or ""
+    ok("# ---- github/gitignore: Python" in g and "# ---- github/gitignore: Node" in g and "__pycache__/" in g
+       and "node_modules" in g, "build + 言語: Python と Node の写しが入る（TARGET_DIR の説明書きは無視して my-app/ に作る）")
+    ok(g.count(".env.*") == 1 and "# ---- テンプレートの補完: 秘密の情報" in g and "secrets/" in g,
+       "テンプレートの補完が足され、すでにある行は重ならない")
+    ok(gi_file(out) is None, "TARGET_DIR を指した場合、03_outputs/ の直下には作らない")
+    # 言語が決まらない制作 → テンプレート。STACK の語から拾う／フォルダの中身から判定する
+    a = base_answers("build", "new")
+    a["STACK"] = "Rust と Three.js"
+    out, _ = setup_into(tmp, a, "stack")
+    g = gi_file(out) or ""
+    ok("github/gitignore: Rust" in g and "github/gitignore: Node" in g, "STACK の語（Rust、Three.js）から言語を拾う")
+    pr = tmp / "detect"
+    (pr / "03_outputs" / "x").mkdir(parents=True)
+    (pr / "03_outputs" / "x" / "go.mod").write_text("module x\n", encoding="utf-8")
+    r = run(TOOLS / "gitignore.py", "--root", pr, "--dir", "03_outputs/x", "--kind", "build")
+    ok("github/gitignore: Go" in (gi_file(pr, "03_outputs/x") or ""), f"フォルダの中身（go.mod）から言語を判定する {r.stdout.strip()[-60:]}")
+    # 知的作業・専門作業は、言語を書いてもテンプレート（--langs の明示だけが上書き）
+    a = base_answers("craft", "new")
+    a.update(STACK="Python", GI_LANGS="Go")
+    out, _ = setup_into(tmp, a, "craft")
+    g = gi_file(out) or ""
+    ok("github/gitignore" not in g and "# ---- テンプレート:" in g and "__pycache__/" in g, "craft: テンプレートの .gitignore（言語別は使わない）")
+    # 複製して改造: 複製元の .gitignore を優先。なければ通常の選び方に戻る
+    pr = tmp / "fork"
+    (pr / "01_sources" / "orig").mkdir(parents=True)
+    (pr / "01_sources" / "orig" / ".gitignore").write_text("build/\n.env\nonly-upstream.cache\n", encoding="utf-8")
+    r = run(TOOLS / "gitignore.py", "--root", pr, "--dir", "03_outputs/fk", "--kind", "build", "--mode", "fork",
+            "--upstream", "https://example.com/x/orig.git", "--langs", "Go")
+    g = gi_file(pr, "03_outputs/fk") or ""
+    ok("only-upstream.cache" in g and "github/gitignore" not in g and g.count("\n.env\n") == 1 and "secrets/" in g,
+       "fork: 複製元の .gitignore を優先し、秘密の行の足りない分だけ補う（URL から 01_sources/orig を見つける）")
+    r = run(TOOLS / "gitignore.py", "--root", pr, "--dir", "03_outputs/fk2", "--kind", "build", "--mode", "fork",
+            "--upstream", "01_sources/none", "--langs", "Go")
+    ok("github/gitignore: Go" in (gi_file(pr, "03_outputs/fk2") or "") and "見つからない" in r.stdout,
+       "fork で複製元に .gitignore がなければ、言語別に戻る")
+    # 置き場所: 03_outputs/ の外・.. は作らない（作らないが、セットアップは成功）
+    for t in ("このリポジトリそのもの", "src/app", "03_outputs/../x"):
+        r = run(TOOLS / "gitignore.py", "--root", pr, "--dir", t, "--kind", "build")
+        ok(not (pr / "src").exists() and not (pr / "x").exists() and not (pr / "このリポジトリそのもの").exists()
+           and ("作りません" in r.stdout or "使えません" in r.stdout), f"置き場所が {t} のときは作らず、理由を出す")
+    a = base_answers("build", "adopt")
+    a["TARGET_DIR"] = "このリポジトリそのもの"
+    out, r = setup_into(tmp, a, "self")
+    ok(r.returncode == 0 and gi_file(out) is None and "作りません" in r.stdout, "TARGET_DIR が外のとき、セットアップは成功し、.gitignore は作らない")
+    # すでにあれば作らない／--force は写してから作り直す
+    r = run(TOOLS / "gitignore.py", "--root", pr, "--dir", "03_outputs/fk", "--langs", "Go")
+    ok("作りません" in r.stdout and "only-upstream.cache" in (gi_file(pr, "03_outputs/fk") or ""), "すでにあるときは上書きしない")
+    r = run(TOOLS / "gitignore.py", "--root", pr, "--dir", "03_outputs/fk", "--langs", "Go", "--kind", "build", "--force")
+    bks = list((pr / "04_logs").glob("pre-gitignore-*/**/.gitignore"))
+    ok(len(bks) == 1 and "only-upstream.cache" in bks[0].read_text(encoding="utf-8")
+       and "github/gitignore: Go" in (gi_file(pr, "03_outputs/fk") or ""), "--force は元の版を 04_logs/ に写してから作り直す")
+    # ネットが使えないとき（取得の失敗）は同梱の写しに切り替わる。知らない言語はネットでも取れず、飛ばして続く
+    env = {**os.environ, "GITIGNORE_OFFLINE": "0", "GITIGNORE_BASE_URL": "http://127.0.0.1:9/"}
+    r = subprocess.run([sys.executable, TOOLS / "gitignore.py", "--root", pr, "--dir", "03_outputs/net", "--langs", "Rust,NoSuchLang"],
+                       capture_output=True, text=True, env=env)
+    g = gi_file(pr, "03_outputs/net") or ""
+    ok("同梱の写し" in r.stdout and "取得に失敗" in r.stdout and "github/gitignore: Rust" in g and "NoSuchLang" in r.stdout
+       and "NoSuchLang" not in g.replace("# ", ""), f"取得に失敗したら同梱の写しに切り替える。知らない言語は飛ばす {r.stdout.strip()[:80]}")
+    # 置き場所の解析（説明書き・読点・ドット入りの名前・ファイル名）
+    sys.path.insert(0, str(TOOLS))
+    import gitignore as gi
+    rr = Path("/r")
+    cases = {"03_outputs/my.app/": "03_outputs/my.app", "03_outputs/site.com": "03_outputs/site.com",
+             "03_outputs/x、別リポ": "03_outputs/x", "成果物は03_outputs/x": "03_outputs/x",
+             "03_outputs/report.md": "03_outputs", "03_outputs/<名前>/（別）": "03_outputs",
+             "03_outputs/a/b.docx": "03_outputs/a", "": "03_outputs"}
+    bad = {t: gi.resolve_dir(rr, t)[0] for t, want in cases.items() if gi.resolve_dir(rr, t)[0] != rr / want}
+    ok(not bad, f"TARGET_DIR の解析: {len(cases)} 通りが期待どおり {bad if bad else ''}")
+    # 言語の拾い方: 誤検出しない／C# を拾う
+    ok(gi.scan_stack("Next step: Python と Objective-C") == ["Python"] and gi.scan_stack("Unity と C#") == ["Unity", "VisualStudio"]
+       and gi.scan_stack("Express で API を作る") == [], "STACK の語: Next step・Objective-C・Express を言語と誤検出せず、C# は拾う")
+    # 言語別ファイルの否定の行（!.vscode/settings.json）を、補完の .vscode/ が打ち消さない
+    pr = tmp / "vsc"
+    r = run(TOOLS / "gitignore.py", "--root", pr, "--dir", "03_outputs/cs", "--langs", "csharp", "--offline")
+    g = gi_file(pr, "03_outputs/cs") or ""
+    ok("!.vscode/settings.json" in g and not any(l.strip() == ".vscode/" for l in g.splitlines()),
+       "補完の .vscode/ が、言語別ファイルの否定の行を打ち消さない")
+    # ヘッダーの「選び方」が、実際に使った方法と合う
+    def head(args):
+        pr2 = tmp / ("h" + str(abs(hash(tuple(args)))))
+        run(TOOLS / "gitignore.py", "--root", pr2, "--dir", "03_outputs/h", "--offline", *args)
+        return (gi_file(pr2, "03_outputs/h") or "").splitlines()[0]
+    ok("テンプレートの .gitignore" in head(["--kind", "build"]) and "言語別" in head(["--kind", "knowledge", "--langs", "Python"])
+       and "テンプレートの .gitignore" in head(["--kind", "craft"]) and "言語別" in head(["--kind", "build", "--langs", "Go"])
+       and "_tools/gitignore.py" in head(["--kind", "build"]), "ヘッダーの選び方が、実際に使った方法と合う")
+    # ネットから取れた場合（手元の HTTP サーバー）。同梱にない言語（Elixir）も取れる
+    import http.server, threading
+    www = tmp / "www"
+    www.mkdir()
+    (www / "Rust.gitignore").write_text("# from-net\n/target-net\n", encoding="utf-8")
+    (www / "Elixir.gitignore").write_text("# elixir-net\n/_build-net\n", encoding="utf-8")
+
+    class H(http.server.SimpleHTTPRequestHandler):
+        def __init__(self, *a, **k):
+            super().__init__(*a, directory=str(www), **k)
+
+        def log_message(self, *a):
+            pass
+    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), H)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    env = {**os.environ, "GITIGNORE_OFFLINE": "0", "GITIGNORE_BASE_URL": f"http://127.0.0.1:{srv.server_port}/"}
+    pr = tmp / "net-ok"
+    r = subprocess.run([sys.executable, TOOLS / "gitignore.py", "--root", pr, "--dir", "03_outputs/n", "--langs", "Rust,Elixir"],
+                       capture_output=True, text=True, env=env)
+    srv.shutdown()
+    g = gi_file(pr, "03_outputs/n") or ""
+    ok("/target-net" in g and "/_build-net" in g and "同梱" not in r.stdout, f"ネットから取れたときは取った版を使う（同梱にない Elixir も） {r.stdout.strip()[:60]}")
+    # 同梱の写しが主要言語ぶんそろっている
+    ok(all((TPL_DIR / f"{n}.gitignore").exists() for n in ("Python", "Node", "Go", "Rust", "Java", "Swift")),
+       "同梱の写しに主要言語がある")
+
+
 def main():
-    names = sys.argv[1:] or ["setup", "checks", "cycle", "adopt"]
+    names = sys.argv[1:] or ["setup", "checks", "cycle", "adopt", "gitignore"]
     tests = {n[2:]: f for n, f in globals().items() if n.startswith("t_")}
     unknown = [n for n in names if n not in tests]
     if unknown:
         sys.exit(f"知らない検査: {unknown}（{', '.join(tests)}）")
+    os.environ.setdefault("GITIGNORE_OFFLINE", "1")  # セットアップが作る .gitignore で、ネットを使わない
     with tempfile.TemporaryDirectory() as d:
         for n in names:
             sub = Path(d) / n

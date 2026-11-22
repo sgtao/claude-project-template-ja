@@ -1,0 +1,46 @@
+#@ safety
+# 秘密の情報
+.env
+.env.*
+!.env.example
+secrets/
+
+# Claude Code の個人設定（共有する設定は .claude/settings.json）
+.claude/settings.local.json
+CLAUDE.local.md
+
+#@ extras
+# 検査や審査の一時ファイル
+.playwright-mcp/
+test-results/
+_to_delete/
+*.tmp
+
+# 大きな生成物（必要なものだけ、行を消して追跡する）
+renders/
+*.mp4
+*.mov
+*.wav
+*.blend1
+
+# OS とエディタ
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+#@ basic
+# Python（スクリプトや検査を書くときの基本）
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+
+# Node
+node_modules/
+dist/
+build/
+*.log
