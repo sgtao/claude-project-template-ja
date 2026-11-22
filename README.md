@@ -14,9 +14,14 @@ Opus や Sonnet でも結果が安定するように、計画・記憶・検査�
 ## 始め方（5 分）
 
 ```bash
-# 1. このテンプレートを新しいフォルダに写して、git を初期化する
-cp -r claude-project-template-ja my-project && cd my-project
+# 1. 最新のリリースを新しいフォルダに展開して、git を初期化する（履歴は引き継がない）
+mkdir my-project && cd my-project
+gh release download --repo sgtao/claude-project-template-ja --archive tar.gz -O - | tar xz --strip-components=1
 git init && git add -A && git commit -m "init from template"
+#   gh がないときは、タグを指定する（<タグ> は https://github.com/sgtao/claude-project-template-ja/releases の版）:
+#   curl -sL https://github.com/sgtao/claude-project-template-ja/archive/refs/tags/<タグ>.tar.gz | tar xz --strip-components=1
+#   main の最新（リリース前の変更を含む）なら refs/tags/<タグ>.tar.gz の部分を refs/heads/main.tar.gz にする。
+#   手元にテンプレートのフォルダがあるときは cp -r claude-project-template-ja my-project でもよい
 
 # 2. ヒアリングに答える（どちらか）
 python3 _tools/setup.py          # 端末で答える
